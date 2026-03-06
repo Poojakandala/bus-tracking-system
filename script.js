@@ -1,12 +1,12 @@
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "bus-tracking-system.firebaseapp.com",
+  apiKey: "AIzaSyXXXX",
+  authDomain: "bus-tracking-system-78e94.firebaseapp.com",
   databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-  projectId: "bus-tracking-system",
-  storageBucket: "bus-tracking-system.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
+  projectId: "bus-tracking-system-78e94",
+  storageBucket: "bus-tracking-system-78e94.appspot.com",
+  messagingSenderId: "316084412095",
+  appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
 };
 
 // Initialize Firebase
@@ -49,4 +49,5 @@ alert("Student not found");
 });
 
 }
+
 
