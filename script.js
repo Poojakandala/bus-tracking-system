@@ -1,3 +1,20 @@
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "bus-tracking-system.firebaseapp.com",
+  databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+  projectId: "bus-tracking-system",
+  storageBucket: "bus-tracking-system.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Connect to database
+const database = firebase.database();
+
 function studentLogin(){
 
 let roll=document.getElementById("roll").value;
@@ -32,3 +49,4 @@ alert("Student not found");
 });
 
 }
+
