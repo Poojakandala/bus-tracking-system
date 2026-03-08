@@ -15,6 +15,15 @@ firebase.initializeApp(firebaseConfig);
 // Connect to database
 const database = firebase.database();
 
+function initMap(){
+
+var map = new google.maps.Map(document.getElementById("map"),{
+zoom:12,
+center:{lat:17.4435,lng:78.441}
+});
+
+}
+
 function studentLogin(){
 
 let roll=document.getElementById("roll").value;
@@ -49,6 +58,7 @@ alert("Student not found");
 });
 
 }
+
 
 
 
