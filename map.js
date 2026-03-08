@@ -1,6 +1,6 @@
 const firebaseConfig = {
-apiKey: "YOUR_KEY",
-authDomain: "YOUR_DOMAIN",
+apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+authDomain: "bus-tracking-system-78e94.firebaseapp.com",
 databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
 projectId: "bus-tracking-system-78e94",
 };
@@ -80,5 +80,6 @@ let div=document.getElementById("location");
 if(div){
 div.innerHTML=text;
 }
+
 
 });
