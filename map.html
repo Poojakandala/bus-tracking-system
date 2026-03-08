@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>Bus Tracking Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 #map{
@@ -20,12 +23,23 @@ margin:auto;
 
 <div id="map"></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<script src="script.js"></script>
+<script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw&callback=initMap" async defer></script>
+// create map
+var map = L.map('map').setView([17.4435,78.441], 13);
+
+// load map tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
+
+// bus marker
+var busMarker = L.marker([17.4435,78.441]).addTo(map)
+.bindPopup("College Bus");
+
+</script>
+
 </body>
-
 </html>
