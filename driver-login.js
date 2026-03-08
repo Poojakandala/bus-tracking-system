@@ -2,19 +2,18 @@ import { db } from "./firebase.js";
 import { ref, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 window.startBus = function() {
-    const driver = document.getElementById("driverid").value; // Fixed ID case
+    const driver = document.getElementById("driverid").value;
     const bus = document.getElementById("busno").value;
 
-    if (!driver || !bus) return alert("Fill all fields");
+    if (!driver || !bus) return alert("Please enter all details");
 
     navigator.geolocation.watchPosition((position) => {
         update(ref(db, 'buses/' + bus), {
             driverId: driver,
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            lastUpdated: Date.now()
+            longitude: position.coords.longitude
         });
     }, (err) => console.error(err), { enableHighAccuracy: true });
 
-    alert("Tracking started for Bus: " + bus);
+    alert("Tracking active. Keep this window open!");
 };
