@@ -1,43 +1,45 @@
 import { db } from "./firebase.js";
-import { ref, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.startBus = function() {
-    console.log("Button Clicked!"); // Check this in Console
-    
+window.startBus = async function() {
     const dId = document.getElementById("driverid").value;
     const bNo = document.getElementById("busno").value;
 
     if (!dId || !bNo) {
-        alert("Please enter both Driver ID and Bus Number");
+        alert("Please enter Driver ID and Bus Number");
         return;
     }
 
-    if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
+    // Step 1: Verify Driver Exists in Database
+    const driverRef = ref(db, 'drivers/' + dId);
+    const snapshot = await get(driverRef);
+
+    if (!snapshot.exists()) {
+        alert("Driver ID not found. Please signup first.");
         return;
     }
 
-    console.log("Requesting GPS Permission...");
-    navigator.geolocation.watchPosition(
-        (pos) => {
-            console.log("GPS Lock Acquired:", pos.coords.latitude, pos.coords.longitude);
-            
+    // Step 2: Request GPS and Start Tracking
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition((pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            // Update the bus location in Firebase
             update(ref(db, 'buses/' + bNo), {
                 driver: dId,
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude
-            }).then(() => {
-                console.log("Firebase Updated successfully!");
-            }).catch((error) => {
-                console.error("Firebase Update Failed:", error);
+                latitude: lat,
+                longitude: lng,
+                lastUpdated: new Date().getTime()
             });
-        },
-        (err) => {
-            console.error("GPS Error Code:", err.code, err.message);
-            alert("Please enable Location/GPS services on your device.");
-        },
-        { enableHighAccuracy: true }
-    );
+            
+            console.log("Location sent to Firebase:", lat, lng);
+        }, (err) => {
+            alert("Error: Please enable GPS/Location permissions in your browser settings.");
+        }, { enableHighAccuracy: true });
 
-    alert("Tracking active for Bus " + bNo + ". Please check the map!");
+        alert("Login Successful! Tracking for Bus " + bNo + " is now live.");
+    } else {
+        alert("GPS is not supported by this browser.");
+    }
 };
