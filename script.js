@@ -1,6 +1,6 @@
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXX",
+  apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
   authDomain: "bus-tracking-system-78e94.firebaseapp.com",
   databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
   projectId: "bus-tracking-system-78e94",
@@ -49,5 +49,6 @@ alert("Student not found");
 });
 
 }
+
 
 
