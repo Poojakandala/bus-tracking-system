@@ -5,20 +5,24 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="header-container">
+    <div class="logo-wrapper">
+        <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" alt="Vignan Logo" class="vignan-logo">
+    </div>
     <nav class="navbar">
-    <div class="logo-text">Vignan BusTrack</div>
-    <div class="hamburger" onclick="toggleMenu()">☰</div>
-    <ul class="nav-links" id="nav-links">
-        <li><a href="student-login.html">Student Login</a></li>
-        <li><a href="student-signup.html">Student Signup</a></li>
-        <li><a href="driver-login.html">Driver Login</a></li>
-        <li><a href="driver-signup.html">Driver Signup</a></li>
-    </ul>
-</nav>
+        <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="student-login.html">Student Login</a></li>
+            <li><a href="student-signup.html">Student Signup</a></li>
+            <li><a href="driver-login.html">Driver Login</a></li>
+            <li><a href="driver-signup.html">Driver Signup</a></li>
+        </ul>
+    </nav>
+</div>
 
 <script>
     function toggleMenu() {
-        document.getElementById("nav-links").classList.toggle("active");
+        document.getElementById("navLinks").classList.toggle("active");
     }
 </script>
     <div class="header-logo-container">
@@ -34,5 +38,6 @@
     <script type="module" src="student-login.js"></script>
 </body>
 </html>
+
 
 
