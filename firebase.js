@@ -1,13 +1,12 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 const firebaseConfig = {
-apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-projectId: "bus-tracking-system-78e94",
-storageBucket: "bus-tracking-system-78e94.appspot.com",
-messagingSenderId: "316084412095",
-appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
+    apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+    authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+    databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+    projectId: "bus-tracking-system-78e94"
 };
 
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
+const app = initializeApp(firebaseConfig);
+export const db = getDatabase(app);
