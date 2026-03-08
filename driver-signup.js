@@ -1,29 +1,37 @@
 import { db } from "./firebase.js";
-import { ref, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.signupDriver = function() {
-    const id = document.getElementById("driverId").value;
+window.signupDriver = async function() {
+    const dId = document.getElementById("driverId").value;
     const name = document.getElementById("name").value;
     const phone = document.getElementById("phone").value;
 
-    if (!id || !name || !phone) {
-        alert("Please fill in all fields");
-        return;
-    }
+    if(!dId || !name || !phone) return alert("Please fill all fields");
 
-    // Saving to 'drivers' node so the map can find them later
-    set(ref(db, 'drivers/' + id), {
-        name: name,
-        phone: phone,
-        registeredAt: Date.now()
-    })
-    .then(() => {
-        alert("Driver Registered Successfully!");
-        // Optional: Redirect to login page
-        // window.location.href = "driver-login.html";
-    })
-    .catch((error) => {
+    const driverRef = ref(db, 'drivers/' + dId);
+    
+    try {
+        // Step 1: Check if the Driver ID already exists
+        const snapshot = await get(driverRef);
+        
+        if (snapshot.exists()) {
+            alert("This Driver ID is already registered! Please use a different ID or login.");
+            window.location.href = "driver-login.html";
+            return;
+        }
+
+        // Step 2: Register new driver
+        await set(driverRef, {
+            name: name,
+            phone: phone,
+            status: "active"
+        });
+        
+        alert("Driver Registration Successful!");
+        window.location.href = "driver-login.html";
+
+    } catch (error) {
         console.error("Signup Error:", error);
-        alert("Error: " + error.message);
-    });
+        alert("An error occurred during registration.");
+    }
 };
