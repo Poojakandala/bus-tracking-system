@@ -37,23 +37,33 @@
 
     <script type="module">
         import { db } from "./firebase.js";
-        import { ref, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        window.registerStudent = function() {
-            const roll = document.getElementById("roll").value;
-            const name = document.getElementById("name").value;
-            const pass = document.getElementById("password").value;
+window.registerStudent = async function() {
+    const roll = document.getElementById("roll").value;
+    const name = document.getElementById("name").value;
+    const pass = document.getElementById("password").value;
 
-            if(!roll || !name || !pass) return alert("Please fill all fields");
+    if(!roll || !name || !pass) return alert("Please fill all fields");
 
-            set(ref(db, 'students/' + roll), {
-                name: name,
-                password: pass
-            }).then(() => {
-                alert("Registration Successful!");
-                window.location.href = "student-login.html";
-            });
-        }
+    const studentRef = ref(db, 'students/' + roll);
+    
+    // Check if student already exists
+    const snapshot = await get(studentRef);
+    if (snapshot.exists()) {
+        alert("This Roll Number is already registered!");
+        return;
+    }
+
+    // If not exists, proceed with registration
+    set(studentRef, {
+        name: name,
+        password: pass
+    }).then(() => {
+        alert("Registration Successful!");
+        window.location.href = "student-login.html";
+    });
+};
     </script>
 </body>
 </html>
