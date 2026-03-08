@@ -23,23 +23,100 @@ margin:auto;
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
 
-// create map
+const firebaseConfig = {
+  apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+  authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+  databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+  projectId: "bus-tracking-system-78e94",
+  storageBucket: "bus-tracking-system-78e94.appspot.com",
+  messagingSenderId: "316084412095",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
 var map = L.map('map').setView([17.4435,78.441], 13);
 
-// load map tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
 }).addTo(map);
 
-// bus marker
-var busMarker = L.marker([17.4435,78.441]).addTo(map)
-.bindPopup("College Bus");
+var busIcon = L.divIcon({
+html:"🚍",
+iconSize:[30,30],
+className:"bus-icon"
+});
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+let studentLat = pos.coords.latitude;
+let studentLng = pos.coords.longitude;
+
+var studentMarker = L.marker([studentLat,studentLng]).addTo(map)
+.bindPopup("📍 You");
+
+db.ref("buses/bus1").on("value",function(snapshot){
+
+let data = snapshot.val();
+
+let busLat = data.latitude;
+let busLng = data.longitude;
+
+let driver = data.driver;
+let phone = data.phone;
+
+let busMarker = L.marker([busLat,busLng],{icon:busIcon}).addTo(map);
+
+let distance = getDistance(studentLat,studentLng,busLat,busLng);
+
+busMarker.on("click",function(){
+
+busMarker.bindPopup("🚌 Bus Number: BUS1").openPopup();
+
+});
+
+busMarker.on("dblclick",function(){
+
+busMarker.bindPopup(
+"Driver: "+driver+
+"<br>Phone: "+phone+
+"<br>Distance: "+distance+" km"
+).openPopup();
+
+});
+
+});
+
+});
+
+function getDistance(lat1,lon1,lat2,lon2){
+
+let R = 6371;
+
+let dLat = (lat2-lat1)*Math.PI/180;
+let dLon = (lon2-lon1)*Math.PI/180;
+
+let a =
+Math.sin(dLat/2)*Math.sin(dLat/2)+
+Math.cos(lat1*Math.PI/180)*
+Math.cos(lat2*Math.PI/180)*
+Math.sin(dLon/2)*Math.sin(dLon/2);
+
+let c = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+
+return (R*c).toFixed(2);
+
+}
 
 </script>
-
 </body>
 </html>
+
