@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <title>Driver Login</title>
 <link rel="stylesheet" href="style.css">
@@ -15,10 +16,55 @@
 
 <button onclick="driverStart()">Start Bus</button>
 
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<script src="script.js"></script>
+
+<script>
+
+const firebaseConfig = {
+apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+projectId: "bus-tracking-system-78e94"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+
+function driverStart(){
+
+var driver = document.getElementById("driverid").value;
+var bus = document.getElementById("busno").value;
+var phone = document.getElementById("phone").value;
+
+
+navigator.geolocation.watchPosition(function(position){
+
+var lat = position.coords.latitude;
+var lng = position.coords.longitude;
+
+
+db.ref("buses/"+bus).set({
+
+driverName:driver,
+phone:phone,
+lat:lat,
+lng:lng
+
+});
+
+});
+
+alert("Bus tracking started");
+
+}
+
+</script>
 
 </body>
+
 </html>
