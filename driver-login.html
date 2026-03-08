@@ -36,8 +36,19 @@
     <h2>Driver Login</h2>
     <input type="text" id="driverid" placeholder="Driver ID">
     <input type="text" id="busno" placeholder="Bus Number">
+    
     <button onclick="startBus()">Start Bus Tracking</button>
+
+    <div class="forgot-link" style="margin-top: 15px;">
+        <a href="#" onclick="showForgotMsg()">Forgot Password?</a>
+    </div>
 </div>
+
+<script>
+    function showForgotMsg() {
+        alert("Vignan Transport Security Notice:\n\nPlease visit the Admin Office at the Main Block to reset your credentials.");
+    }
+</script>
 
 
 
@@ -92,6 +103,7 @@ alert("Bus tracking started");
 </body>
 
 </html>
+
 
 
 
