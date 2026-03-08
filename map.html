@@ -27,88 +27,75 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-            projectId: "bus-tracking-system-78e94",
-            storageBucket: "bus-tracking-system-78e94.appspot.com",
-            messagingSenderId: "316084412095",
-            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+        authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+        databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+        projectId: "bus-tracking-system-78e94",
+        storageBucket: "bus-tracking-system-78e94.appspot.com",
+        messagingSenderId: "316084412095",
+        appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        // Initialize Map centered on Hyderabad
-        var map = L.map('map').setView([17.4435, 78.441], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    // Initialize Map
+    var map = L.map('map').setView([17.4435, 78.441], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        var busIcon = L.divIcon({ html: "🚌", iconSize: [35, 35], className: "bus-icon" });
-        var markers = {}; // Store multiple bus markers
+    // Custom Bus Emoji Icon
+    var busIcon = L.divIcon({ 
+        html: '<div style="font-size: 30px;">🚌</div>', 
+        iconSize: [30, 30], 
+        className: "bus-icon" 
+    });
 
-        // Get Student Location and Listen for Buses
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            let sLat = pos.coords.latitude;
-            let sLng = pos.coords.longitude;
-            L.marker([sLat, sLng]).addTo(map).bindPopup("📍 Your Location");
+    var markers = {}; // Store multiple bus markers
 
-            // Listen to all children in 'buses' node (Handles 1, 2, 3...)
-            db.ref("buses").on("value", function(snapshot) {
-                const busesData = snapshot.val();
-                if (!busesData) return;
+    // Listen to the entire 'buses' node to find IDs 1, 2, 3
+    db.ref("buses").on("value", function(snapshot) {
+        const busesData = snapshot.val();
+        if (!busesData) return;
 
-                for (let id in busesData) {
-                    const bus = busesData[id];
+        for (let id in busesData) {
+            const bus = busesData[id];
+            
+            // Fix: Ensure coordinates are numbers
+            let bLat = parseFloat(bus.latitude);
+            let bLng = parseFloat(bus.longitude);
+
+            if (!isNaN(bLat) && !isNaN(bLng)) {
+                if (markers[id]) {
+                    // Update existing marker position
+                    markers[id].setLatLng([bLat, bLng]);
+                } else {
+                    // Create new bus emoji marker
+                    markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
                     
-                    // Force numeric coordinates to ensure emoji shows
-                    let bLat = parseFloat(bus.latitude);
-                    let bLng = parseFloat(bus.longitude);
-                    let bPhone = bus.phone || "N/A";
-                    let bDriver = bus.dId || "Unknown";
-
-                    if (!isNaN(bLat) && !isNaN(bLng)) {
-                        if (markers[id]) {
-                            markers[id].setLatLng([bLat, bLng]);
-                        } else {
-                            markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
-                            // Auto-center map on first bus found
-                            map.flyTo([bLat, bLng], 15);
-                        }
-
-                        // Combined Click Details (Show Bus Number, Driver, and Call Button)
-                        let dist = getDistance(sLat, sLng, bLat, bLng);
-                        markers[id].bindPopup(`
-                            <div style="text-align:center;">
-                                <b>Bus Number: ${id}</b><br>
-                                Driver ID: ${bDriver}<br>
-                                Distance: ${dist} km<br>
-                                <a href="tel:${bPhone}" style="display:block; background:#28a745; color:white; padding:8px; margin-top:5px; text-decoration:none; border-radius:5px;">📞 Call Driver</a>
-                            </div>
-                        `);
-                    }
+                    // Auto-focus on the bus location
+                    map.flyTo([bLat, bLng], 15);
                 }
-            });
-        });
 
-        // Haversine formula for distance
-        function getDistance(lat1, lon1, lat2, lon2) {
-            let R = 6371;
-            let dLat = (lat2 - lat1) * Math.PI / 180;
-            let dLon = (lon2 - lon1) * Math.PI / 180;
-            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return (R * c).toFixed(2);
-        }
-
-        // 2. Logout Function
-        window.logoutUser = function() {
-            if (confirm("Are you sure you want to logout?")) {
-                window.location.href = "index.html";
+                // Popup with driver details when clicked
+                markers[id].bindPopup(`
+                    <div style="text-align:center;">
+                        <b>Bus Number: ${id}</b><br>
+                        Driver ID: ${bus.dId || 'N/A'}<br>
+                        <a href="tel:${bus.phone}" style="display:block; background:#28a745; color:white; padding:8px; margin-top:5px; text-decoration:none; border-radius:5px;">📞 Call Driver</a>
+                    </div>
+                `);
             }
-        };
-    </script>
+        }
+    });
+
+    // Logout Function
+    window.logoutUser = function() {
+        if (confirm("Are you sure you want to logout?")) {
+            window.location.href = "index.html";
+        }
+    };
+</script>
 </body>
 </html>
+
