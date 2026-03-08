@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
-import { ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Initialize the Map (Centered on Hyderabad by default)
+// Initialize the Map (Centered on Hyderabad)
 var map = L.map('map').setView([17.44, 78.44], 13);
 
 // Add Free OpenStreetMap Tiles
@@ -16,32 +16,41 @@ var markers = {};
 // Listen for Bus Data changes in Firebase
 const busesRef = ref(db, 'buses');
 onValue(busesRef, (snapshot) => {
-    const buses = snapshot.val();
-    for (let id in buses) {
-        const data = buses[id];
-        updateBusMarker(id, data);
+    const data = snapshot.val();
+    if (!data) return;
+
+    for (let id in data) {
+        const bus = data[id];
+        const lat = bus.latitude; //
+        const lon = bus.longitude; //
+        const busPhone = bus.phone; // Pulled from your updated node
+        const driverID = bus.dId;   // Integer dId field
+
+        if (markers[id]) {
+            // Update position
+            markers[id].setLatLng([lat, lon]);
+        } else {
+            // Create new marker
+            markers[id] = L.marker([lat, lon]).addTo(map);
+        }
+
+        // Update the popup content every time data changes
+        markers[id].bindPopup(`
+            <div style="text-align: center; font-family: sans-serif;">
+                <b style="font-size: 1.1em; color: #003366;">Vignan Bus: ${id}</b><br>
+                <span style="color: #555;">Driver ID: ${driverID}</span>
+                <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+                <a href="tel:${busPhone}" style="
+                    display: inline-block; 
+                    background: #28a745; 
+                    color: white; 
+                    padding: 10px 15px; 
+                    text-decoration: none; 
+                    border-radius: 5px; 
+                    font-weight: bold;">
+                    📞 Call Driver: ${busPhone}
+                </a>
+            </div>
+        `);
     }
 });
-
-async function updateBusMarker(busNo, data) {
-    const pos = [data.latitude, data.longitude];
-
-    if (markers[busNo]) {
-        markers[busNo].setLatLng(pos);
-    } else {
-        markers[busNo] = L.marker(pos).addTo(map);
-        
-        markers[busNo].on('click', async () => {
-            // UPDATED: Using data.driver to match your screenshot
-            const driverSnap = await get(ref(db, 'drivers/' + data.driver)); 
-            const driver = driverSnap.val();
-            
-            markers[busNo].bindPopup(`
-                <b>Bus: ${busNo}</b><br>
-                Driver: ${driver ? driver.name : 'Unknown'}<br>
-                Phone: ${data.phone || 'N/A'} 
-            `).openPopup();
-        });
-    }
-}
-
