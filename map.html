@@ -1,139 +1,114 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
-<title>Bus Tracking Map</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<style>
-#map{
-height:500px;
-width:90%;
-margin:auto;
-}
-
-.bus-icon{
-font-size:25px;
-}
-</style>
-
+    <title>Bus Tracking Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <style>
+        body { margin: 0; font-family: sans-serif; }
+        #map { height: 500px; width: 95%; margin: 20px auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .bus-icon { font-size: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header-bar { background: #003366; padding: 12px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
 </head>
-
 <body>
 
-<h2 align="center">College Bus Tracking</h2>
+    <div class="header-bar">
+        <span style="font-size: 1.2rem; font-weight: bold;">🚌 Vignan Bus Tracker</span>
+        <button class="logout-btn" onclick="logoutUser()">Logout</button>
+    </div>
 
-<div id="map"></div>
+    <h2 align="center">Live College Bus Locations</h2>
+    <div id="map"></div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+            projectId: "bus-tracking-system-78e94",
+            storageBucket: "bus-tracking-system-78e94.appspot.com",
+            messagingSenderId: "316084412095",
+            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
+        };
 
-<script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-const firebaseConfig = {
-apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-projectId: "bus-tracking-system-78e94",
-storageBucket: "bus-tracking-system-78e94.appspot.com",
-messagingSenderId: "316084412095",
-appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
-};
+        // Initialize Map centered on Hyderabad
+        var map = L.map('map').setView([17.4435, 78.441], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-firebase.initializeApp(firebaseConfig);
+        var busIcon = L.divIcon({ html: "🚌", iconSize: [35, 35], className: "bus-icon" });
+        var markers = {}; // Store multiple bus markers
 
-const db = firebase.database();
+        // Get Student Location and Listen for Buses
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            let sLat = pos.coords.latitude;
+            let sLng = pos.coords.longitude;
+            L.marker([sLat, sLng]).addTo(map).bindPopup("📍 Your Location");
 
-var map = L.map('map').setView([17.4435,78.441], 13);
+            // Listen to all children in 'buses' node (Handles 1, 2, 3...)
+            db.ref("buses").on("value", function(snapshot) {
+                const busesData = snapshot.val();
+                if (!busesData) return;
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
-}).addTo(map);
+                for (let id in busesData) {
+                    const bus = busesData[id];
+                    
+                    // Force numeric coordinates to ensure emoji shows
+                    let bLat = parseFloat(bus.latitude);
+                    let bLng = parseFloat(bus.longitude);
+                    let bPhone = bus.phone || "N/A";
+                    let bDriver = bus.dId || "Unknown";
 
-var busIcon = L.divIcon({
-html:"🚍",
-iconSize:[30,30],
-className:"bus-icon"
-});
+                    if (!isNaN(bLat) && !isNaN(bLng)) {
+                        if (markers[id]) {
+                            markers[id].setLatLng([bLat, bLng]);
+                        } else {
+                            markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
+                            // Auto-center map on first bus found
+                            map.flyTo([bLat, bLng], 15);
+                        }
 
-var busMarker = null;
+                        // Combined Click Details (Show Bus Number, Driver, and Call Button)
+                        let dist = getDistance(sLat, sLng, bLat, bLng);
+                        markers[id].bindPopup(`
+                            <div style="text-align:center;">
+                                <b>Bus Number: ${id}</b><br>
+                                Driver ID: ${bDriver}<br>
+                                Distance: ${dist} km<br>
+                                <a href="tel:${bPhone}" style="display:block; background:#28a745; color:white; padding:8px; margin-top:5px; text-decoration:none; border-radius:5px;">📞 Call Driver</a>
+                            </div>
+                        `);
+                    }
+                }
+            });
+        });
 
-navigator.geolocation.getCurrentPosition(function(pos){
+        // Haversine formula for distance
+        function getDistance(lat1, lon1, lat2, lon2) {
+            let R = 6371;
+            let dLat = (lat2 - lat1) * Math.PI / 180;
+            let dLon = (lon2 - lon1) * Math.PI / 180;
+            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return (R * c).toFixed(2);
+        }
 
-let studentLat = pos.coords.latitude;
-let studentLng = pos.coords.longitude;
-
-var studentMarker = L.marker([studentLat,studentLng]).addTo(map)
-.bindPopup("📍 You");
-
-db.ref("buses/bus1").on("value",function(snapshot){
-
-let data = snapshot.val();
-
-let busLat = data.latitude;
-let busLng = data.longitude;
-
-let driver = data.driver;
-let phone = data.phone;
-
-let distance = getDistance(studentLat,studentLng,busLat,busLng);
-
-if(busMarker==null){
-
-busMarker = L.marker([busLat,busLng],{icon:busIcon}).addTo(map);
-
-}else{
-
-busMarker.setLatLng([busLat,busLng]);
-
-}
-
-busMarker.on("click",function(){
-
-busMarker.bindPopup("🚌 Bus Number: BUS1").openPopup();
-
-});
-
-busMarker.on("dblclick",function(){
-
-busMarker.bindPopup(
-"Driver: "+driver+
-"<br>Phone: "+phone+
-"<br>Distance: "+distance+" km"
-).openPopup();
-
-});
-
-});
-
-});
-
-function getDistance(lat1,lon1,lat2,lon2){
-
-let R = 6371;
-
-let dLat = (lat2-lat1)*Math.PI/180;
-let dLon = (lon2-lon1)*Math.PI/180;
-
-let a =
-Math.sin(dLat/2)*Math.sin(dLat/2)+
-Math.cos(lat1*Math.PI/180)*
-Math.cos(lat2*Math.PI/180)*
-Math.sin(dLon/2)*Math.sin(dLon/2);
-
-let c = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-
-return (R*c).toFixed(2);
-
-}
-
-</script>
-
+        // 2. Logout Function
+        window.logoutUser = function() {
+            if (confirm("Are you sure you want to logout?")) {
+                window.location.href = "index.html";
+            }
+        };
+    </script>
 </body>
 </html>
