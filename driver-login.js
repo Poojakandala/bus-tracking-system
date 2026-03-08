@@ -9,7 +9,8 @@ window.startBus = function() {
 
     navigator.geolocation.watchPosition((position) => {
         update(ref(db, 'buses/' + bus), {
-            driverId: driver,
+            // CHANGE THIS LINE: 
+            driver: driver, // Matches your Firebase key "driver"
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
         });
