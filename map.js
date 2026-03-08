@@ -1,115 +1,48 @@
-// Initialize Firebase
-const firebaseConfig = {
-apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-projectId: "bus-tracking-system-78e94",
-};
+import { db } from "./firebase.js";
+import { ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-firebase.initializeApp(firebaseConfig);
+// Initialize the Map (Centered on Hyderabad by default)
+var map = L.map('map').setView([17.44, 78.44], 13);
 
-const db = firebase.database();
+// Add Free OpenStreetMap Tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
+// Storage for active bus markers
+var markers = {};
 
-// MAP
-var map = new google.maps.Map(document.getElementById("map"),{
-
-zoom:13,
-center:{lat:17.44,lng:78.44}
-
+// Listen for Bus Data changes in Firebase
+const busesRef = ref(db, 'buses');
+onValue(busesRef, (snapshot) => {
+    const buses = snapshot.val();
+    for (let id in buses) {
+        const data = buses[id];
+        updateBusMarker(id, data);
+    }
 });
 
+async function updateBusMarker(busNo, data) {
+    const pos = [data.latitude, data.longitude];
 
-// SHOW BUSES
-db.ref("buses").on("value",function(snapshot){
-
-const buses = snapshot.val();
-
-for(let busNo in buses){
-
-const bus = buses[busNo];
-
-const marker = new google.maps.Marker({
-
-position:{lat:bus.latitude,lng:bus.longitude},
-map:map,
-icon:"https://maps.google.com/mapfiles/kml/shapes/bus.png"
-
-});
-
-
-// CLICK BUS -> DRIVER DETAILS
-marker.addListener("click",function(){
-
-db.ref("drivers/"+bus.driver).once("value",function(snap){
-
-const driver = snap.val();
-
-alert(
-"Bus Number: "+busNo+
-"\nDriver: "+driver.name+
-"\nPhone: "+driver.phone
-);
-
-});
-
-});
-
-}
-
-});
-
-
-// STUDENT LOGIN
-function studentLogin(){
-
-let roll = document.getElementById("roll").value;
-let password = document.getElementById("password").value;
-
-db.ref("students/"+roll).once("value",function(snapshot){
-
-if(snapshot.exists()){
-
-let data = snapshot.val();
-
-if(data.password == password){
-window.location="map.html";
-}
-else{
-alert("Wrong Password");
-}
-
-}
-else{
-alert("Student not found");
-}
-
-});
-
-}
-
-
-// DRIVER START BUS
-function driverStart(){
-
-let driverid=document.getElementById("driverid").value;
-let busno=document.getElementById("busno").value;
-
-navigator.geolocation.watchPosition(function(position){
-
-let lat=position.coords.latitude;
-let lon=position.coords.longitude;
-
-db.ref("buses/"+busno).set({
-
-driver:driverid,
-latitude:lat,
-longitude:lon
-
-});
-
-});
-
-alert("Bus tracking started");
-
+    if (markers[busNo]) {
+        // Update existing marker position
+        markers[busNo].setLatLng(pos);
+    } else {
+        // Create new marker if it doesn't exist
+        markers[busNo] = L.marker(pos).addTo(map);
+        
+        // Add click event to fetch Driver details from 'drivers' node
+        markers[busNo].on('click', async () => {
+            const driverSnap = await get(ref(db, 'drivers/' + data.driverId));
+            const driver = driverSnap.val();
+            
+            markers[busNo].bindPopup(`
+                <b>Bus: ${busNo}</b><br>
+                Driver: ${driver ? driver.name : 'Unknown'}<br>
+                Phone: ${driver ? driver.phone : 'N/A'}
+            `).openPopup();
+        });
+    }
 }
