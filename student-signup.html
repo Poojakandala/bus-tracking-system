@@ -5,6 +5,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <nav class="navbar">
+    <div class="logo-text">Vignan BusTrack</div>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <ul class="nav-links" id="nav-links">
+        <li><a href="student-login.html">Student Login</a></li>
+        <li><a href="student-signup.html">Student Signup</a></li>
+        <li><a href="driver-login.html">Driver Login</a></li>
+        <li><a href="driver-signup.html">Driver Signup</a></li>
+    </ul>
+</nav>
+
+<script>
+    function toggleMenu() {
+        document.getElementById("nav-links").classList.toggle("active");
+    }
+</script>
     <div class="header-logo-container">
         <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" class="rect-logo">
     </div>
