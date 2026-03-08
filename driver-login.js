@@ -1,26 +1,20 @@
 import { db } from "./firebase.js";
 import { ref, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.startBus = function(){
+window.startBus = function() {
+    const driver = document.getElementById("driverid").value; // Fixed ID case
+    const bus = document.getElementById("busno").value;
 
-const driver = document.getElementById("driverId").value;
-const bus = document.getElementById("busNo").value;
+    if (!driver || !bus) return alert("Fill all fields");
 
-navigator.geolocation.watchPosition(function(position){
+    navigator.geolocation.watchPosition((position) => {
+        update(ref(db, 'buses/' + bus), {
+            driverId: driver,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            lastUpdated: Date.now()
+        });
+    }, (err) => console.error(err), { enableHighAccuracy: true });
 
-const lat = position.coords.latitude;
-const lng = position.coords.longitude;
-
-update(ref(db,'buses/'+bus),{
-
-driverId:driver,
-latitude:lat,
-longitude:lng
-
-});
-
-});
-
-alert("Bus Tracking Started");
-
-}
+    alert("Tracking started for Bus: " + bus);
+};
