@@ -11,37 +11,36 @@ window.startBus = async function() {
     }
 
     try {
-        // Step 1: Fetch Driver details (including phone) from the drivers node
+        // 1. Verify Driver and get their Phone Number
         const driverRef = ref(db, 'drivers/' + dIdInput);
         const snapshot = await get(driverRef);
 
         if (!snapshot.exists()) {
-            alert("Driver ID not found. Please register first.");
+            alert("Driver ID not found! Register in the drivers node first.");
             return;
         }
 
         const driverData = snapshot.val();
-        const driverPhone = driverData.phone; // Get phone number from drivers/105
+        const driverPhone = driverData.phone; //
 
-        // Step 2: Start GPS tracking
+        // 2. Start GPS
         if (navigator.geolocation) {
-            alert(`Tracking Started for Bus ${bNoInput}!`);
-
+            alert("GPS active. Tracking Bus " + bNoInput);
+            
             navigator.geolocation.watchPosition((position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
 
-                // Step 3: Update the buses node with dId AND phone
+                // 3. Update the specific bus node dynamically
                 update(ref(db, 'buses/bus' + bNoInput), {
-                    dId: parseInt(dIdInput),
-                    latitude: lat,
-                    longitude: lon,
-                    phone: driverPhone, // Now the student can see this
+                    dId: parseInt(dIdInput), // Match integer format
+                    latitude: lat,           //
+                    longitude: lon,          //
+                    phone: driverPhone,      // Added for student view
                     lastUpdated: new Date().toLocaleTimeString()
                 });
-
             }, (err) => {
-                alert("GPS Error: Please enable location.");
+                alert("Please enable Location/GPS on your phone settings.");
             }, { enableHighAccuracy: true });
         }
     } catch (error) {
