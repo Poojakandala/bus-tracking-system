@@ -1,60 +1,71 @@
 import { db } from "./firebase.js";
 import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// This makes the function visible to your HTML button
+// Make the function available to the HTML button
 window.startBus = async function() {
-    console.log("Button clicked!"); // Check your phone's console for this
-
     const dIdInput = document.getElementById("driverid").value.trim();
     const bNoInput = document.getElementById("busno").value.trim();
 
+    // 1. Basic Validation
     if (!dIdInput || !bNoInput) {
-        alert("Enter Driver ID and Bus Number");
+        alert("Please enter both your Driver ID and Bus Number.");
         return;
     }
 
     try {
-        // 1. Check if driver exists
+        // 2. Authenticate: Check if Driver exists in 'drivers' node
         const driverRef = ref(db, 'drivers/' + dIdInput);
         const snapshot = await get(driverRef);
 
         if (!snapshot.exists()) {
-            alert("Driver ID " + dIdInput + " not found in database!");
+            alert("Invalid Driver ID. Please register first.");
             return;
         }
 
         const driverData = snapshot.val();
-        const driverPhone = driverData.phone; //
+        const driverPhone = driverData.phone; // Fetched from drivers profile
+        const driverName = driverData.name;
 
-        // 2. Request Location
+        // 3. Start Geolocation Tracking
         if (navigator.geolocation) {
-            alert("GPS Initializing... Please click 'Allow' if prompted.");
+            alert(`Welcome ${driverName}! Tracking started for Bus ${bNoInput}. Keep this tab open.`);
 
             navigator.geolocation.watchPosition((position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
 
-                // 3. Update the 'buses' node
-                // We use 'bus' + bNoInput to match your 'bus1' key
-                update(ref(db, 'buses/bus' + bNoInput), {
-                    dId: parseInt(dIdInput), // Store as integer
-                    latitude: lat,           //
-                    longitude: lon,          //
-                    phone: driverPhone       // Added for students
+                // 4. Update the 'buses' node using the numeric ID (e.g., 'buses/1')
+                const busPath = 'buses/' + bNoInput;
+                
+                update(ref(db, busPath), {
+                    dId: parseInt(dIdInput),    // Matches your integer format
+                    latitude: lat,              // Matches your screenshot key
+                    longitude: lon,             // Matches your screenshot key
+                    phone: driverPhone,         // Saved for student map click
+                    lastUpdated: new Date().toLocaleTimeString()
                 }).then(() => {
-                    console.log("Location updated successfully!");
+                    console.log(`Updated Bus ${bNoInput} successfully!`);
                 });
 
             }, (error) => {
-                alert("GPS Error: " + error.message);
-            }, { 
-                enableHighAccuracy: true,
-                maximumAge: 0 
+                // Handle common GPS errors
+                if (error.code === error.PERMISSION_DENIED) {
+                    alert("ERROR: Location permission denied. Please click the lock icon in your browser and select 'Allow' for Location.");
+                } else {
+                    alert("GPS Error: " + error.message);
+                }
+            }, {
+                enableHighAccuracy: true, // Uses GPS for better precision
+                maximumAge: 0,            // Do not use cached location
+                timeout: 5000             // Wait 5 seconds for a fix
             });
+
         } else {
-            alert("Your browser does not support GPS.");
+            alert("Your browser does not support GPS tracking.");
         }
+
     } catch (err) {
-        alert("Firebase Error: " + err.message);
+        console.error("Firebase Error:", err);
+        alert("System Error: " + err.message);
     }
 };
