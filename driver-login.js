@@ -69,3 +69,17 @@ window.startBus = async function() {
         alert("System Error: " + err.message);
     }
 };
+// ... all your existing code (Firebase imports, startBus function, etc.) ...
+
+// ADD IT AT THE VERY BOTTOM OF THE FILE
+window.logoutUser = function() {
+    if (confirm("Are you sure you want to logout?")) {
+        // This stops the phone's GPS from draining battery after logout
+        if (typeof watchID !== 'undefined') {
+            navigator.geolocation.clearWatch(watchID);
+        }
+        
+        // Redirects to your main landing page
+        window.location.href = "index.html";
+    }
+};
