@@ -27,22 +27,21 @@ async function updateBusMarker(busNo, data) {
     const pos = [data.latitude, data.longitude];
 
     if (markers[busNo]) {
-        // Update existing marker position
         markers[busNo].setLatLng(pos);
     } else {
-        // Create new marker if it doesn't exist
         markers[busNo] = L.marker(pos).addTo(map);
         
-        // Add click event to fetch Driver details from 'drivers' node
         markers[busNo].on('click', async () => {
-            const driverSnap = await get(ref(db, 'drivers/' + data.driverId));
+            // UPDATED: Using data.driver to match your screenshot
+            const driverSnap = await get(ref(db, 'drivers/' + data.driver)); 
             const driver = driverSnap.val();
             
             markers[busNo].bindPopup(`
                 <b>Bus: ${busNo}</b><br>
                 Driver: ${driver ? driver.name : 'Unknown'}<br>
-                Phone: ${driver ? driver.phone : 'N/A'}
+                Phone: ${data.phone || 'N/A'} 
             `).openPopup();
         });
     }
 }
+
