@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Signup | Vignan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header-logo-container">
+        <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" class="rect-logo">
+    </div>
+
+    <div class="form-wrapper">
+        <h2>Student Signup</h2>
+        <input type="text" id="roll" placeholder="Roll Number (e.g., 23891A0526)">
+        <input type="text" id="name" placeholder="Full Name">
+        <input type="password" id="password" placeholder="Create Password">
+        <button onclick="registerStudent()">Register</button>
+        <p><a href="student-login.html">Already have an account? Login</a></p>
+    </div>
+
+    <script type="module">
+        import { db } from "./firebase.js";
+        import { ref, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        window.registerStudent = function() {
+            const roll = document.getElementById("roll").value;
+            const name = document.getElementById("name").value;
+            const pass = document.getElementById("password").value;
+
+            if(!roll || !name || !pass) return alert("Please fill all fields");
+
+            set(ref(db, 'students/' + roll), {
+                name: name,
+                password: pass
+            }).then(() => {
+                alert("Registration Successful!");
+                window.location.href = "student-login.html";
+            });
+        }
+    </script>
+</body>
+</html>
