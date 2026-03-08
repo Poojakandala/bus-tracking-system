@@ -2,19 +2,35 @@ import { db } from "./firebase.js";
 import { ref, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 window.startBus = function() {
-    const driver = document.getElementById("driverid").value;
-    const bus = document.getElementById("busno").value;
+    // These IDs must match your HTML exactly
+    const driverInput = document.getElementById("driverid"); 
+    const busInput = document.getElementById("busno");
 
-    if (!driver || !bus) return alert("Please enter all details");
+    if (!driverInput.value || !busInput.value) {
+        alert("Please enter both Driver ID and Bus Number");
+        return;
+    }
 
-    navigator.geolocation.watchPosition((position) => {
-        update(ref(db, 'buses/' + bus), {
-            // CHANGE THIS LINE: 
-            driver: driver, // Matches your Firebase key "driver"
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-        });
-    }, (err) => console.error(err), { enableHighAccuracy: true });
+    const driver = driverInput.value;
+    const bus = busInput.value;
 
-    alert("Tracking active. Keep this window open!");
+    // Check if browser supports GPS
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition((position) => {
+            const updates = {};
+            updates['buses/' + bus + '/driver'] = driver;
+            updates['buses/' + bus + '/latitude'] = position.coords.latitude;
+            updates['buses/' + bus + '/longitude'] = position.coords.longitude;
+
+            update(ref(db), updates)
+                .then(() => console.log("Location updated"))
+                .catch((err) => console.error("Firebase Error:", err));
+        }, (error) => {
+            alert("Error: Please enable GPS/Location services.");
+        }, { enableHighAccuracy: true });
+
+        alert("Tracking active for Bus: " + bus + ". Keep this tab open!");
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
 };
