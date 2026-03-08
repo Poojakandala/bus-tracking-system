@@ -5,15 +5,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="header-logo-container">
+    <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" class="rect-logo">
+</div>
+<div class="form-wrapper">
     <h2>Driver Signup</h2>
-    <div class="form-container">
-        <input type="text" id="driverId" placeholder="Create Driver ID (e.g. D01)"><br><br>
-        <input type="text" id="name" placeholder="Full Name"><br><br>
-        <input type="text" id="phone" placeholder="Phone Number"><br><br>
-        
-        <button onclick="signupDriver()">Register Driver</button>
-        <p><a href="driver-login.html">Already registered? Login here</a></p>
-    </div>
+    <input type="text" id="driverId" placeholder="Driver ID (e.g., D104)">
+    <input type="text" id="name" placeholder="Driver Name">
+    <input type="text" id="phone" placeholder="Phone Number">
+    <button onclick="signupDriver()">Register Driver</button>
+</div>
 
     <script type="module" src="driver-signup.js"></script>
 </body>
