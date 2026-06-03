@@ -1,58 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Driver Control Panel - Vignan Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VignanITS RTC - Driver Console</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #0b0f19; color: white; }
-        .header-bar { background: #002244; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #003366; }
-        .form-wrapper { max-width: 420px; background: #111827; margin: 40px auto; padding: 30px; border-radius: 10px; border: 1px solid #1f2937; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        select, input { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #374151; background: #1f2937; color: white; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        select option { background: #111827; color: white; }
-        .stops-box { background: #1f2937; border: 1px solid #374151; padding: 15px; border-radius: 6px; text-align: left; max-height: 180px; overflow-y: auto; margin: 15px 0; }
-        .stop-row { display: flex; align-items: center; gap: 12px; margin: 10px 0; font-size: 15px; }
-        .stop-row input[type="checkbox"] { width: auto; margin: 0; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; color: white; margin-top: 10px; }
-        .btn-primary { background: #0055ff; }
-        .btn-primary:hover { background: #0044cc; }
-        .btn-success { background: #10b981; }
-        .btn-success:hover { background: #059669; }
+        :root {
+            --rtc-orange: #ff6b00;
+            --rtc-navy: #0a1931;
+            --rtc-dark: #151f32;
+            --rtc-light: #f4f6f9;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--rtc-navy); color: white; }
+        .header-bar { background: linear-gradient(135deg, var(--rtc-navy), #002244); padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--rtc-orange); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .logo-area { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; letter-spacing: 1px; color: var(--rtc-orange); }
+        .logo-area span { color: white; }
+        .main-container { max-width: 480px; background: var(--rtc-dark); margin: 40px auto; padding: 35px; border-radius: 16px; border: 1px solid #233149; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { font-size: 24px; margin-bottom: 25px; color: white; text-align: center; font-weight: 700; border-bottom: 1px solid #233149; padding-bottom: 15px; }
+        label { display: block; text-align: left; margin-top: 15px; color: #9ca3af; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input { width: 100%; padding: 14px; margin: 8px 0 18px 0; border: 1px solid #233149; background: #0a1931; color: white; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: all 0.3s; }
+        select:focus, input:focus { border-color: var(--rtc-orange); outline: none; box-shadow: 0 0 8px rgba(255, 107, 0, 0.4); }
+        .stops-grid { background: #0a1931; border: 1px solid #233149; padding: 15px; border-radius: 8px; max-height: 220px; overflow-y: auto; margin: 15px 0; text-align: left; }
+        .stop-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #151f32; transition: background 0.2s; }
+        .stop-item:hover { background: #151f32; }
+        .stop-item input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; accent-color: var(--rtc-orange); transform: scale(1.2); }
+        .stop-item label { margin: 0; color: white; text-transform: none; font-size: 15px; font-weight: 500; cursor: pointer; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; letter-spacing: 0.5px; transition: all 0.3s; margin-top: 10px; }
+        .btn-orange { background: var(--rtc-orange); color: white; }
+        .btn-orange:hover { background: #e05e00; transform: translateY(-2px); }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; transform: translateY(-2px); }
+        .btn-back { background: #374151; color: #d1d5db; }
         .hidden { display: none; }
-        label { display: block; text-align: left; margin-top: 10px; color: #9ca3af; font-size: 14px; font-weight: bold; }
+        .tracking-state { text-align: center; padding: 20px; }
+        .pulse-dot { width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
 <body>
 
     <div class="header-bar">
-        <span style="font-weight: bold; font-size: 18px;">🚌 Vignan Driver Control Panel</span>
+        <div class="logo-area">🚌 VIGNAN <span>BUS</span></div>
         <button onclick="logoutUser()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Logout</button>
     </div>
 
-    <div class="form-wrapper" id="stage1">
-        <h2 style="color: #0055ff; margin-top: 0;">Dynamic Route Setup</h2>
+    <div class="main-container" id="stage1">
+        <h2>Trip Configuration</h2>
         
-        <label>Driver ID:</label>
-        <input type="number" id="driverid" placeholder="e.g., 105">
+        <label>Driver Staff Number</label>
+        <input type="number" id="driverid" placeholder="Enter Staff ID">
         
-        <label>Bus Number:</label>
-        <input type="number" id="busno" placeholder="e.g., 1">
+        <label>Vehicle Fleet Number</label>
+        <input type="number" id="busno" placeholder="Enter Bus Number [e.g., 1]">
         
-        <label>Source Terminal:</label>
-        <select id="sourceSelect" onchange="filterStopsDropdowns()"></select>
+        <label>Origin Terminal (Starting Point)</label>
+        <select id="sourceSelect"></select>
 
-        <label>Destination Terminal:</label>
-        <select id="destSelect" onchange="filterStopsDropdowns()"></select>
+        <label>Destination Terminal (Ending Point)</label>
+        <select id="destSelect"></select>
 
-        <button class="btn btn-primary" onclick="goToStage2()">Next: Configure Intermediate Stops ➡️</button>
+        <button class="btn btn-orange" onclick="goToStage2()">Configure Route Stops ➡️</button>
     </div>
 
-    <div class="form-wrapper hidden" id="stage2">
-        <h2 style="color: #10b981; margin-top: 0;">Select Active Route Stops</h2>
-        <p style="color: #9ca3af; font-size:13px;">Check the intermediate stop locations this bus will pick up students from during this trip:</p>
+    <div class="main-container hidden" id="stage2">
+        <h2>Via Stops Checklist</h2>
+        <p style="color: #9ca3af; font-size:13px; text-align: center; margin-top: -15px;">Only showing middle stops along this specific route path:</p>
         
-        <div class="stops-box" id="middleStopsArea"></div>
+        <div class="stops-grid" id="middleStopsArea"></div>
 
-        <button class="btn btn-success" onclick="startBusTracking()">Start Shift & Live Broadcast</button>
-        <button class="btn" style="background:#4b5563;" onclick="backToStage1()">⬅️ Modify Terminals</button>
+        <button class="btn btn-success" onclick="startBusTracking()">Initialize Route & Broadcast</button>
+        <button class="btn btn-back" onclick="backToStage1()" style="margin-top: 12px;">⬅️ Change Terminals</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -74,11 +91,27 @@
         var watchID = null;
         var allFetchedLocations = [];
 
-        // Fetch location names directly from your automated Firebase index node
+        // Master chronological layout order of the routes as they exist geographically
+        const routeSequenceMaster = [
+            "Secunderabad", "Koti", "Nalgonda Cross Roads", "DSNR S-Katta", "Chaitanyapuri", 
+            "Kamala Nagar", "Rythu Bazar", "RTC Colony", "TKR Kaman", "Champapet", "Balapur", 
+            "Chandrayangutta", "BD Reddy", "Hastinapuram", "GSR", "Omkar Nagar", "Sushma", 
+            "BN Reddy", "CT Colony", "LB Temple", "H-Temple", "Mansoorabad", "Chintalkunta", 
+            "Panama", "Huda Sai Nagar", "Shiva Sindhu", "SF Colony", "Navceena", "Auto Nagar", 
+            "Bhagyalatha", "w-o School", "G-Temple", "Red Tank", "LC Colony", "L-palem", 
+            "Kuntluva", "P-Amberpet", "HYT", "Nagole AB", "Snehapuri", "Uppal", "W- House", 
+            "R-R Court", "Kamineni", "Reliance", "Alkapuri", "Al-Arch", "Vishnu", "Inamguda", 
+            "Thoopranpet", "Malkapuram", "Pochampally", "Lakkaram", "Lakkaram Dharga", 
+            "Choutuppal", "Valigonda Road", "Kaithapuram", "Koyyalagudem", "Dharmojigudem", 
+            "Yellagiri", "Panthangi", "Nalgonda", "Vignan Campus"
+        ];
+
         db.ref("locations").once("value", function(snapshot) {
             if (snapshot.exists()) {
-                snapshot.forEach(child => {
-                    allFetchedLocations.push(child.key);
+                snapshot.forEach(child => { 
+                    if(!allFetchedLocations.includes(child.key)) {
+                        allFetchedLocations.push(child.key); 
+                    }
                 });
                 populateTerminalDropdowns();
             }
@@ -87,19 +120,17 @@
         function populateTerminalDropdowns() {
             const srcSel = document.getElementById("sourceSelect");
             const destSel = document.getElementById("destSelect");
+            let optionsHtml = `<option value="">-- Choose Station --</option>`;
             
-            let optionsHtml = `<option value="">-- Select Location --</option>`;
-            allFetchedLocations.forEach(place => {
-                optionsHtml += `<option value="${place}">${place}</option>`;
+            // Populate based on master sequence order
+            routeSequenceMaster.forEach(place => {
+                if(allFetchedLocations.includes(place)) {
+                    optionsHtml += `<option value="${place}">${place}</option>`;
+                }
             });
-
             srcSel.innerHTML = optionsHtml;
             destSel.innerHTML = optionsHtml;
         }
-
-        window.filterStopsDropdowns = function() {
-            // Placeholder to add dynamic rules preventing matching terminal sources if desired.
-        };
 
         window.goToStage2 = function() {
             const dId = document.getElementById("driverid").value.trim();
@@ -107,29 +138,38 @@
             const src = document.getElementById("sourceSelect").value;
             const dest = document.getElementById("destSelect").value;
 
-            if (!dId || !bNo || !src || !dest) {
-                alert("Please fill out Driver ID, Bus Number, Source, and Destination.");
-                return;
-            }
-            if (src === dest) {
-                alert("Source and Destination terminals cannot be identical.");
-                return;
-            }
+            if (!dId || !bNo || !src || !dest) { alert("Complete all terminal profile inputs."); return; }
+            if (src === dest) { alert("Origin and Destination cannot match."); return; }
 
-            // Render all remaining locations as middle checkboxes
             const container = document.getElementById("middleStopsArea");
             container.innerHTML = "";
-            
-            let middleStops = allFetchedLocations.filter(place => place !== src && place !== dest);
+
+            // Find array positions inside our master sequential line map
+            let startIndex = routeSequenceMaster.indexOf(src);
+            let endIndex = routeSequenceMaster.indexOf(dest);
+
+            let middleStops = [];
+
+            // If the bus is moving forward down the array line
+            if (startIndex < endIndex) {
+                middleStops = routeSequenceMaster.slice(startIndex + 1, endIndex);
+            } 
+            // If the bus is coming backward down the array line
+            else {
+                middleStops = routeSequenceMaster.slice(endIndex + 1, startIndex).reverse();
+            }
+
+            // Filter out selections that don't exist inside your active Firebase reference list
+            middleStops = middleStops.filter(stop => allFetchedLocations.includes(stop));
 
             if(middleStops.length === 0) {
-                container.innerHTML = "<p style='color:#ef4444;'>No secondary stop patterns discovered.</p>";
+                container.innerHTML = `<p style="color: #ef4444; text-align:center; font-size:14px;">No intermediate tracking points found between these selections.</p>`;
             } else {
                 middleStops.forEach(stop => {
                     container.innerHTML += `
-                        <div class="stop-row">
-                            <input type="checkbox" name="midStop" value="${stop}" id="chk_${stop}">
-                            <label for="chk_${stop}" style="margin:0; color:white;">${stop}</label>
+                        <div class="stop-item">
+                            <input type="checkbox" name="midStop" value="${stop}" id="chk_${stop}" checked>
+                            <label for="chk_${stop}">${stop}</label>
                         </div>
                     `;
                 });
@@ -139,11 +179,6 @@
             document.getElementById("stage2").classList.remove("hidden");
         };
 
-        window.backToStage2 = function() {
-            document.getElementById("stage2").classList.add("hidden");
-            document.getElementById("stage1").classList.remove("hidden");
-        };
-
         window.startBusTracking = function() {
             const dId = document.getElementById("driverid").value.trim();
             const bNo = document.getElementById("busno").value.trim();
@@ -151,21 +186,17 @@
             const dest = document.getElementById("destSelect").value;
 
             let finalRouteSequence = [src];
-            document.querySelectorAll('input[name="midStop"]:checked').forEach(cb => {
-                finalRouteSequence.push(cb.value);
-            });
+            document.querySelectorAll('input[name="midStop"]:checked').forEach(cb => { finalRouteSequence.push(cb.value); });
             finalRouteSequence.push(dest);
 
             db.ref('drivers/' + dId).once('value', function(snapshot) {
                 const driverInfo = snapshot.val() || {};
 
                 if (navigator.geolocation) {
-                    alert("Shift verified! Transmitting coordinates to Vignan Student map infrastructure.");
-                    
                     watchID = navigator.geolocation.watchPosition(function(pos) {
                         db.ref('buses/' + bNo).update({
                             dId: parseInt(dId),
-                            phone: driverInfo.phone || "9704989549", // Uses your standard default backup
+                            phone: driverInfo.phone || "9704989549",
                             latitude: pos.coords.latitude,
                             longitude: pos.coords.longitude,
                             sourceName: src,
@@ -176,11 +207,11 @@
                     }, function(err) { alert("GPS Lock Failed: " + err.message); }, { enableHighAccuracy: true });
 
                     document.getElementById("stage2").innerHTML = `
-                        <h3 style="color:#10b981;">Shift Active & Tracking</h3>
-                        <p style="color:#9ca3af;">Bus #${bNo} is broadcasting live positional tracking telemetry parameters. Keep this browser window open.</p>
+                        <div class="tracking-state">
+                            <h3 style="color:#10b981;"><span class="pulse-dot"></span>SERVICE RUN ACTIVE</h3>
+                            <p style="color:#9ca3af; font-size: 14px;">Vehicle Fleet #${bNo} is broadcasting telemetry.</p>
+                        </div>
                     `;
-                } else {
-                    alert("Your browser does not support geolocation mapping services.");
                 }
             });
         };
@@ -190,12 +221,7 @@
             document.getElementById("stage1").classList.remove("hidden");
         };
 
-        window.logoutUser = function() {
-            if (confirm("Terminate active tracking session?")) {
-                if (watchID) navigator.geolocation.clearWatch(watchID);
-                window.location.href = "index.html";
-            }
-        };
+        window.logoutUser = function() { window.location.href = "index.html"; };
     </script>
 </body>
 </html>
