@@ -10,7 +10,7 @@
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         #map { height: 550px; width: 95%; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .hidden { display: none; }
-        .bus-icon { font-size: 32px; text-align: center; }
+        .bus-icon { font-size: 32px; text-align: center; line-height: 35px; }
     </style>
 </head>
 <body>
@@ -76,7 +76,10 @@
 
             // Fetch the coordinates of the selected boarding stop from the database
             db.ref("locations/" + selectedStopName).once("value", function(snap) {
-                if (!snap.exists()) return;
+                if (!snap.exists()) {
+                    alert("Selected location data could not be fetched from the database tree.");
+                    return;
+                }
                 
                 targetStopLat = snap.val().lat;
                 targetStopLng = snap.val().lng;
@@ -101,57 +104,55 @@
 
         function startFleetTrackingListener() {
             db.ref("buses").on("value", function(snapshot) {
-                const buses = snapshot.val();
-                if (!buses) return;
+                const data = snapshot.val();
+                if (!data) return;
 
-                for (let id in buses) {
-                    const bus = buses[id];
-                    let bLat = parseFloat(bus.latitude);
-                    let bLng = parseFloat(bus.longitude);
+                for (let id in data) {
+                    const bus = data[id];
+        
+                    // Safely verify and render the bus emoji at its live hardware GPS coordinate tracking location
+                    let liveLat = parseFloat(bus.latitude);
+                    let liveLng = parseFloat(bus.longitude);
+        
+                    if (isNaN(liveLat) || isNaN(liveLng)) continue;
 
-                    if (isNaN(bLat) || !bLng) continue;
+                    // Calculate proximity range
+                    let distanceToStop = calculateHaversine(targetStopLat, targetStopLng, liveLat, liveLng);
 
-                    // Calculate distance from the bus to the student's selected stop
-                    let distanceToStop = calculateHaversine(targetStopLat, targetStopLng, bLat, bLng);
-
-                    // Show the bus if it's within a 5.0 km radius of the stop
-                    if (distanceToStop <= 5.0) {
+                    // Visualize if bus is in local range zone (under 5.0 km radius)
+                    if (parseFloat(distanceToStop) <= 5.0) {
+                        
+                        // Check if marker exists, if not create it
                         if (markers[id]) {
-                            markers[id].setLatLng([bLat, bLng]);
+                            markers[id].setLatLng([liveLat, liveLng]);
                         } else {
-                            markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
+                            markers[id] = L.marker([liveLat, liveLng], { icon: busIcon }).addTo(map);
                         }
 
-                        // Generate a detailed interactive details card popup on click
+                        // Generate a straight line trace route if endpoints coordinates are available
+                        if (bus.sourceLat && bus.sourceLng && bus.destLat && bus.destLng) {
+                            let routePath = [
+                                [parseFloat(bus.sourceLat), parseFloat(bus.sourceLng)],
+                                [parseFloat(bus.destLat), parseFloat(bus.destLng)]
+                            ];
+            
+                            if (routeLines[id]) map.removeLayer(routeLines[id]);
+                            routeLines[id] = L.polyline(routePath, {color: '#003366', weight: 4, opacity: 0.6}).addTo(map);
+                        }
+
+                        // Detailed custom popups with call driver integrations
                         markers[id].bindPopup(`
-                            <div style="text-align:center; font-family:Arial,sans-serif; min-width:160px;">
-                                <h4 style="margin:2px 0; color:#003366;">Vignan Bus #${id}</h4>
-                                <p style="margin:4px 0; font-size:13px;"><b>Driver Code:</b> ${bus.dId || 'Assigning'}</p>
+                            <div style="text-align:center; font-family:Arial, sans-serif;">
+                                <h3 style="margin:2px 0; color:#003366;">Bus #${id}</h3>
+                                <p style="margin:4px 0; font-size:13px;"><b>Route:</b> ${bus.sourceName || 'N/A'} ➡️ ${bus.destName || 'N/A'}</p>
                                 <p style="margin:4px 0; font-size:13px; color:#d9534f;"><b>Distance:</b> ${distanceToStop} km away</p>
+                                <p style="margin:4px 0; font-size:12px; color:gray;">Driver ID: ${bus.dId || 'N/A'}</p>
                                 <hr style="border:0; border-top:1px solid #eee; margin:6px 0;">
-                                <a href="tel:${bus.phone}" style="display:block; background:#28a745; color:white; padding:8px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px;">📞 Contact Driver</a>
+                                <a href="tel:${bus.phone || ''}" style="display:block; background:#28a745; color:white; padding:6px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px;">📞 Call Driver</a>
                             </div>
                         `);
-
-                        // Dynamically plot today's polyline route path logic if available
-                        if (bus.todayRouteStops && bus.todayRouteStops.length > 0) {
-                            if (routeLines[id]) map.removeLayer(routeLines[id]);
-
-                            let pathCoordinates = [];
-                            let promises = bus.todayRouteStops.map(stop => {
-                                return db.ref("locations/" + stop).once("value", function(lSnap) {
-                                    if (lSnap.exists()) pathCoordinates.push([lSnap.val().lat, lSnap.val().lng]);
-                                });
-                            });
-
-                            Promise.all(promises).then(() => {
-                                if (pathCoordinates.length > 1) {
-                                    routeLines[id] = L.polyline(pathCoordinates, { color: '#003366', weight: 5, opacity: 0.6 }).addTo(map);
-                                }
-                            });
-                        }
                     } else {
-                        // Remove the bus marker if it moves out of range
+                        // Remove vehicle out of bounds markers
                         if (markers[id]) {
                             map.removeLayer(markers[id]);
                             delete markers[id];
