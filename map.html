@@ -26,12 +26,7 @@
         
         <label style="display:block; text-align:left; margin-top:10px;"><b>Select Your Boarding Stop:</b></label>
         <select id="studentStopSelect">
-            <option value="">-- Select Your Stop --</option>
-            <option value="Uppal">Uppal</option>
-            <option value="Secunderabad">Secunderabad</option>
-            <option value="Koti">Koti</option>
-            <option value="Dilsukhnagar">Dilsukhnagar</option>
-            <option value="LB Nagar">LB Nagar</option>
+            <option value="">-- Fetching Active Options --</option>
         </select>
         
         <button onclick="initializeStudentMap()" style="width:100%; padding:12px; background:#003366; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Initialize Map</button>
@@ -65,39 +60,45 @@
         var routeLines = {};
         var busIcon = L.divIcon({ html: '🚌', iconSize: [35, 35], className: "bus-icon" });
 
+        // Populate student option menu items straight from your Firebase keys database tree node
+        db.ref("locations").once("value", function(snapshot) {
+            if(snapshot.exists()) {
+                const selectElement = document.getElementById("studentStopSelect");
+                let listHtml = `<option value="">-- Choose Your Stop --</option>`;
+                snapshot.forEach(child => {
+                    listHtml += `<option value="${child.key}">${child.key}</option>`;
+                });
+                selectElement.innerHTML = listHtml;
+            }
+        });
+
         window.initializeStudentMap = function() {
             const roll = document.getElementById("studentRoll").value.trim();
             selectedStopName = document.getElementById("studentStopSelect").value;
 
             if (!roll || !selectedStopName) {
-                alert("Please enter your Roll Number and select a Boarding Stop.");
+                alert("Please complete authorization inputs.");
                 return;
             }
 
-            // Fetch the coordinates of the selected boarding stop from the database
             db.ref("locations/" + selectedStopName).once("value", function(snap) {
-                if (!snap.exists()) {
-                    alert("Selected location data could not be fetched from the database tree.");
-                    return;
-                }
+                if (!snap.exists()) return;
                 
                 targetStopLat = snap.val().lat;
                 targetStopLng = snap.val().lng;
 
-                // Toggle interface views
                 document.getElementById("studentAuthBox").classList.add("hidden");
                 document.getElementById("mapContainer").classList.remove("hidden");
                 document.getElementById("welcomeMsg").innerText = `Tracking buses near ${selectedStopName} for Student ${roll}`;
 
-                // Setup the Map centered on the student's stop
-                map = L.map('map').setView([targetStopLat, targetStopLng], 13);
+                // Setup the Map centered on the student's stop location point
+                map = L.map('map').setView([targetStopLat, targetStopLng], 12);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-                // Drop a permanent marker on the student's chosen boarding stop
+                // Add student stop marker pins
                 L.marker([targetStopLat, targetStopLng]).addTo(map)
                     .bindPopup(`<b>📍 Your Stop: ${selectedStopName}</b>`).openPopup();
 
-                // Begin scanning live fleet database node feeds
                 startFleetTrackingListener();
             });
         };
@@ -109,65 +110,71 @@
 
                 for (let id in data) {
                     const bus = data[id];
-        
-                    // Safely verify and render the bus emoji at its live hardware GPS coordinate tracking location
                     let liveLat = parseFloat(bus.latitude);
                     let liveLng = parseFloat(bus.longitude);
         
                     if (isNaN(liveLat) || isNaN(liveLng)) continue;
 
-                    // Calculate proximity range
+                    // Calculate proximity range radius metric boundaries
                     let distanceToStop = calculateHaversine(targetStopLat, targetStopLng, liveLat, liveLng);
 
-                    // Visualize if bus is in local range zone (under 5.0 km radius)
+                    // Visualize if inside proximity limits (5.0 km radius check)
                     if (parseFloat(distanceToStop) <= 5.0) {
                         
-                        // Check if marker exists, if not create it
                         if (markers[id]) {
                             markers[id].setLatLng([liveLat, liveLng]);
                         } else {
                             markers[id] = L.marker([liveLat, liveLng], { icon: busIcon }).addTo(map);
                         }
 
-                        // Generate a straight line trace route if endpoints coordinates are available
-                        if (bus.sourceLat && bus.sourceLng && bus.destLat && bus.destLng) {
-                            let routePath = [
-                                [parseFloat(bus.sourceLat), parseFloat(bus.sourceLng)],
-                                [parseFloat(bus.destLat), parseFloat(bus.destLng)]
-                            ];
-            
+                        // Trace and connect today's ordered multi-stop checkpoint lists
+                        if (bus.todayRouteStops && bus.todayRouteStops.length > 0) {
                             if (routeLines[id]) map.removeLayer(routeLines[id]);
-                            routeLines[id] = L.polyline(routePath, {color: '#003366', weight: 4, opacity: 0.6}).addTo(map);
+
+                            let pathCoordinates = [];
+                            let promises = bus.todayRouteStops.map(stopName => {
+                                return db.ref("locations/" + stopName).once("value", function(lSnap) {
+                                    if (lSnap.exists()) {
+                                        pathCoordinates.push([lSnap.val().lat, lSnap.val().lng]);
+                                    }
+                                });
+                            });
+
+                            // Re-draw the connecting polyline once all coordinates are fetched
+                            Promise.all(promises).then(() => {
+                                if (pathCoordinates.length > 1) {
+                                    routeLines[id] = L.polyline(pathCoordinates, {
+                                        color: '#003366', 
+                                        weight: 5, 
+                                        opacity: 0.75,
+                                        lineCap: 'round'
+                                    }).addTo(map);
+                                }
+                            });
                         }
 
-                        // Detailed custom popups with call driver integrations
+                        // Detailed interactive popups with direct clickable phone integrations
                         markers[id].bindPopup(`
-                            <div style="text-align:center; font-family:Arial, sans-serif;">
-                                <h3 style="margin:2px 0; color:#003366;">Bus #${id}</h3>
+                            <div style="text-align:center; font-family:Arial, sans-serif; min-width:160px;">
+                                <h3 style="margin:2px 0; color:#003366;">Vignan Bus #${id}</h3>
                                 <p style="margin:4px 0; font-size:13px;"><b>Route:</b> ${bus.sourceName || 'N/A'} ➡️ ${bus.destName || 'N/A'}</p>
                                 <p style="margin:4px 0; font-size:13px; color:#d9534f;"><b>Distance:</b> ${distanceToStop} km away</p>
-                                <p style="margin:4px 0; font-size:12px; color:gray;">Driver ID: ${bus.dId || 'N/A'}</p>
+                                <p style="margin:2px 0; font-size:12px; color:gray;">Driver ID Ref: ${bus.dId || 'N/A'}</p>
                                 <hr style="border:0; border-top:1px solid #eee; margin:6px 0;">
-                                <a href="tel:${bus.phone || ''}" style="display:block; background:#28a745; color:white; padding:6px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px;">📞 Call Driver</a>
+                                <a href="tel:${bus.phone || ''}" style="display:block; background:#28a745; color:white; padding:8px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px; text-align:center;">📞 Call Driver</a>
                             </div>
                         `);
                     } else {
-                        // Remove vehicle out of bounds markers
-                        if (markers[id]) {
-                            map.removeLayer(markers[id]);
-                            delete markers[id];
-                        }
-                        if (routeLines[id]) {
-                            map.removeLayer(routeLines[id]);
-                            delete routeLines[id];
-                        }
+                        // Clean up markers if the bus is outside the 5km radius
+                        if (markers[id]) { map.removeLayer(markers[id]); delete markers[id]; }
+                        if (routeLines[id]) { map.removeLayer(routeLines[id]); delete routeLines[id]; }
                     }
                 }
             });
         }
 
         function calculateHaversine(lat1, lon1, lat2, lon2) {
-            let R = 6371; // Earth radius in km
+            let R = 6371; 
             let dLat = (lat2 - lat1) * Math.PI / 180;
             let dLon = (lon2 - lon1) * Math.PI / 180;
             let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -176,9 +183,7 @@
             return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(2);
         }
 
-        window.logoutUser = function() {
-            window.location.href = "index.html";
-        };
+        window.logoutUser = function() { window.location.href = "index.html"; };
     </script>
 </body>
 </html>
