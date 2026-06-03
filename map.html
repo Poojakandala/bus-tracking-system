@@ -14,57 +14,54 @@
             --vignan-teal: #5bc0be;
             --vignan-orange: #ff6b00;
         }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--vignan-dark); color: #f8fafc; padding: 20px; }
-        .container { max-width: 500px; background: var(--vignan-card); margin: 60px auto; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid #3a506b; text-align: center; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--vignan-dark); color: #f8fafc; padding: 15px; box-sizing: border-box; }
         
-        h2 { margin-top: 0; color: white; }
-        select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #475569; background: #0b1329; color: white; border-radius: 6px; font-size: 16px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; background: var(--vignan-orange); color: white; transition: background 0.2s; }
-        .btn:hover { background: #e05e00; }
+        .header { background: #002244; padding: 15px; text-align: center; border-bottom: 3px solid var(--vignan-orange); border-radius: 8px; margin-bottom: 15px; }
+        .header h1 { margin: 0; font-size: 18px; color: white; }
+        .student-meta { color: var(--vignan-teal); margin-top: 5px; font-size: 13px; font-weight: 600; }
 
-        /* Main Map Layout (Hidden initially) */
-        .main-layout { display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; gap: 20px; }
+        .main-layout { display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; gap: 15px; }
         @media(min-width: 768px) { .main-layout { flex-direction: row; } }
         
-        .dashboard-panel { flex: 1; background: var(--vignan-card); border-radius: 12px; padding: 20px; border: 1px solid #3a506b; height: 550px; overflow-y: auto; box-sizing: border-box; }
-        .panel-title { font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #3a506b; padding-bottom: 10px; margin-top: 0; color: #cbd5e1; }
+        .dashboard-panel { flex: 1; background: var(--vignan-card); border-radius: 12px; padding: 15px; border: 1px solid #3a506b; min-height: 250px; max-height: 500px; overflow-y: auto; box-sizing: border-box; }
+        .panel-title { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #3a506b; padding-bottom: 8px; margin-top: 0; color: #cbd5e1; }
         
-        .bus-card { background: #0b1329; border: 1px solid #3a506b; border-radius: 8px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; border-left: 5px solid #64748b; }
-        .bus-card:hover { transform: translateY(-2px); border-color: var(--vignan-teal); }
+        .bus-card { background: #0b1329; border: 1px solid #3a506b; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: transform 0.2s; border-left: 5px solid #64748b; }
+        .bus-card:hover { transform: scale(1.01); }
         .bus-card.priority-1 { border-left-color: var(--vignan-orange); background: linear-gradient(to right, #2a1b10, #0b1329); }
         .bus-card.priority-2 { border-left-color: var(--vignan-teal); }
         
-        .bus-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 8px; }
-        .tag-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .bus-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 6px; }
+        .tag-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
         .tag-p1 { background: var(--vignan-orange); color: white; }
         .tag-p2 { background: var(--vignan-teal); color: #0b1329; }
         
-        .metrics-grid { display: flex; gap: 15px; margin-top: 10px; background: #1c2541; padding: 8px; border-radius: 6px; font-size: 13px; }
+        .metrics-grid { display: flex; gap: 10px; margin-top: 8px; background: #1c2541; padding: 8px; border-radius: 6px; font-size: 12px; }
         .metric-item { flex: 1; text-align: center; }
-        .metric-item span { display: block; font-size: 15px; font-weight: bold; color: var(--vignan-teal); }
+        .metric-item span { display: block; font-size: 14px; font-weight: bold; color: var(--vignan-teal); }
         .metric-item.p1-text span { color: var(--vignan-orange); }
 
-        .map-wrapper { flex: 2; height: 550px; border-radius: 12px; overflow: hidden; border: 1px solid #3a506b; }
+        .map-wrapper { flex: 1.5; height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid #3a506b; position: relative; background: #000; }
         #map { width: 100%; height: 100%; }
-        .hidden { display: none; }
-        .no-buses { text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 14px; }
+        .no-buses { text-align: center; color: #94a3b8; padding: 30px 10px; font-size: 13px; }
+        
+        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 19, 41, 0.9); display: flex; align-items: center; justify-content: center; z-index: 999; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="selectionScreen">
-        <h2>Welcome to VignanITS Portal</h2>
-        <p style="color: #94a3b8; font-size: 14px;">Select your boarding stop to scan for oncoming buses:</p>
-        <select id="studentStopDropdown"><option value="">Loading stops from database...</option></select>
-        <button class="btn" onclick="initializeTrackingDashboard()">Track Live Buses ➡️</button>
+    <div class="header">
+        <h1>🚌 VignanITS Student Portal</h1>
+        <div class="student-meta" id="studentTag">Connecting to Vignan database stream...</div>
     </div>
 
-    <div class="main-layout hidden" id="trackingDashboard">
+    <div class="main-layout">
         <div class="dashboard-panel">
-            <h2 class="panel-title" id="panelHeaderTitle">Available Fleet</h2>
-            <div id="busContainerList"><p class="no-buses">Scanning active vehicle broadcasts...</p></div>
+            <h2 class="panel-title">Buses For Your Stop</h2>
+            <div id="busContainerList"><p class="no-buses">Waiting for location sync...</p></div>
         </div>
         <div class="map-wrapper">
+            <div id="loadingOverlay" class="loading-overlay">⏳ Synchronizing Geolocation Map Engine...</div>
             <div id="map"></div>
         </div>
     </div>
@@ -74,6 +71,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <script>
+        const studentAssignedStop = "Lakkaram"; 
+        document.getElementById("studentTag").innerText = `Target Stop Base: ${studentAssignedStop} | Student Live Access`;
+
         const firebaseConfig = {
             apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
             authDomain: "bus-tracking-system-78e94.firebaseapp.com",
@@ -88,89 +88,85 @@
         const db = firebase.database();
 
         let locationDatabaseCache = {};
-        let selectedStudentStop = "";
         let map = null;
         let activeMapMarkers = {};
+        let isMapInitialized = false;
 
-        // 1. Fetch entire location catalog with geo-coordinates on startup
-        db.ref("locations").once("value", function(snapshot) {
-            if (snapshot.exists()) {
-                const dropdown = document.getElementById("studentStopDropdown");
-                dropdown.innerHTML = `<option value="">-- Choose Your Stop --</option>`;
-                
-                snapshot.forEach(child => {
-                    locationDatabaseCache[child.key] = child.val();
-                    dropdown.innerHTML += `<option value="${child.key}">${child.key}</option>`;
-                });
-            }
-        });
-
-        // 2. Haversine Formula to compute real distance between two points
         function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Earth's radius in kilometers
+            if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+            const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; 
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // 3. Switch screen contexts and activate map tracking listeners
-        window.initializeTrackingDashboard = function() {
-            selectedStudentStop = document.getElementById("studentStopDropdown").value;
-            if (!selectedStudentStop) { alert("Please select a valid stop point."); return; }
+        // STEP 1: Download locations first to avoid undefined reference crashes
+        db.ref("locations").on("value", function(snapshot) {
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    // Normalize keys by trimming spaces to avoid matching errors
+                    locationDatabaseCache[child.key.trim()] = child.val();
+                });
+                
+                if (!isMapInitialized) {
+                    initLeafletMap();
+                }
+            }
+        });
 
-            document.getElementById("selectionScreen").classList.add("hidden");
-            document.getElementById("trackingDashboard").classList.remove("hidden");
-            document.getElementById("panelHeaderTitle").innerText = `Buses for ${selectedStudentStop}`;
-
-            // Initialize Map object instance
-            const stopGeo = locationDatabaseCache[selectedStudentStop] || { latitude: 17.2584, longitude: 78.8741 };
-            map = L.map('map').setView([stopGeo.latitude, stopGeo.longitude], 13);
+        function initLeafletMap() {
+            isMapInitialized = true;
+            // Use fallback coordinates if Lakkaram hasn't finished geocoding yet
+            const defaultStopGeo = locationDatabaseCache[studentAssignedStop] || { latitude: 17.2584, longitude: 78.8741 };
+            
+            map = L.map('map').setView([defaultStopGeo.latitude, defaultStopGeo.longitude], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; Leaflet' }).addTo(map);
+            
+            // Mark Student Base Point
+            L.marker([defaultStopGeo.latitude, defaultStopGeo.longitude]).addTo(map)
+                .bindPopup(`<b>Your Boarding Station: ${studentAssignedStop}</b>`).openPopup();
+            
+            // Hide the loading blocker screen
+            document.getElementById("loadingOverlay").classList.add("hidden");
+            document.getElementById("loadingOverlay").style.display = "none";
 
-            // Mark student's home base stop on map
-            L.marker([stopGeo.latitude, stopGeo.longitude], {
-                icon: L.divIcon({ html: '📍', className: 'student-home-icon', iconSize: [24, 24] })
-            }).addTo(map).bindPopup(`<b>Your Selected Stop: ${selectedStudentStop}</b>`).openPopup();
+            // STEP 2: Start listening for live bus locations
+            startLiveBusTrackingStream();
+        }
 
-            startRealtimeFirebaseListener();
-        };
-
-        // 4. Core filtering, sequence verification and sorting engine
-        function startRealtimeFirebaseListener() {
+        function startLiveBusTrackingStream() {
             db.ref("buses").on("value", function(snapshot) {
                 const listContainer = document.getElementById("busContainerList");
                 listContainer.innerHTML = "";
-                
-                // Clear existing map layers safely before recalculating positions
                 clearAllMarkers();
 
                 if (!snapshot.exists()) {
-                    listContainer.innerHTML = '<p class="no-buses">No service buses active right now.</p>';
+                    listContainer.innerHTML = '<p class="no-buses">No buses are actively driving right now.</p>';
                     return;
                 }
 
                 let filteredBusesList = [];
-                const studentStopGeo = locationDatabaseCache[selectedStudentStop];
+                // Dynamic safety fallback verification
+                const studentStopGeo = locationDatabaseCache[studentAssignedStop] || { latitude: 17.2584, longitude: 78.8741 };
 
                 snapshot.forEach(child => {
                     const busNo = child.key;
                     const busData = child.val();
                     const routeArray = busData.todayRouteStops || [];
 
-                    if (!busData.latitude || !busData.longitude || !routeArray.includes(selectedStudentStop)) {
-                        return; // Skip if bus doesn't track this stop or lacks GPS data
+                    if (!busData.latitude || !busData.longitude || !routeArray.includes(studentAssignedStop)) {
+                        return; // Ignore buses not on this route
                     }
 
-                    // A. Determine the bus's chronological position along its route line
+                    // Compute which stop index the bus is closest to right now
                     let closestStopIndex = 0;
                     let minimumDistanceFound = Infinity;
 
                     routeArray.forEach((stopName, index) => {
-                        const stopCoords = locationDatabaseCache[stopName];
+                        const stopCoords = locationDatabaseCache[stopName.trim()];
                         if (stopCoords) {
                             let d = calculateHaversineDistance(busData.latitude, busData.longitude, stopCoords.latitude, stopCoords.longitude);
                             if (d < minimumDistanceFound) {
@@ -180,57 +176,46 @@
                         }
                     });
 
-                    let studentStopIndex = routeArray.indexOf(selectedStudentStop);
+                    let studentStopIndex = routeArray.indexOf(studentAssignedStop);
 
-                    // CRITICAL FILTER: If current closest index is greater than student's stop index, the bus already passed it!
+                    // PASSED FILTER: If the bus passed your stop index, hide it instantly
                     if (closestStopIndex > studentStopIndex) {
-                        return; // Drop bus from list entirely!
+                        return; 
                     }
 
-                    // B. Compute Distance and ETA metrics
                     let distanceKM = calculateHaversineDistance(busData.latitude, busData.longitude, studentStopGeo.latitude, studentStopGeo.longitude);
-                    
-                    // Assume typical college bus speed is roughly 30 km/hr (ETA in minutes = distance * 2)
-                    let etaMinutes = Math.round(distanceKM * 2);
-                    if (etaMinutes < 1) etaMinutes = "Arriving Now";
-                    else etaMinutes = `${etaMinutes} mins`;
+                    let etaMinutes = Math.round(distanceKM * 2); // Approximate speed metric
+                    let etaText = etaMinutes < 1 ? "Arriving Now" : `${etaMinutes} mins`;
 
-                    // C. Classify Priority Tiers
-                    let priorityLevel = 2; // Default Route Match priority
-                    if (busData.sourceName === selectedStudentStop || busData.destName === selectedStudentStop) {
-                        priorityLevel = 1; // Direct Terminus/Stop Match Priority
+                    let priorityLevel = 2; // Route passing priority
+                    if (busData.sourceName === studentAssignedStop || busData.destName === studentAssignedStop) {
+                        priorityLevel = 1; // Direct match priority
                     }
 
                     filteredBusesList.push({
-                        busNo,
-                        data: busData,
-                        priorityLevel,
-                        distance: distanceKM.toFixed(2) + " km",
-                        eta: etaMinutes
+                        busNo, data: busData, priorityLevel, distance: distanceKM.toFixed(2) + " km", eta: etaText
                     });
                 });
 
-                // Sort lists natively: Priority 1 explicitly positioned above Priority 2 matches
+                // Sort lists: Priority 1 explicitly displayed on top
                 filteredBusesList.sort((a, b) => a.priorityLevel - b.priorityLevel);
 
                 if (filteredBusesList.length === 0) {
-                    listContainer.innerHTML = '<p class="no-buses">No upcoming buses heading towards your stop at this time.</p>';
+                    listContainer.innerHTML = '<p class="no-buses">No upcoming buses heading towards your stop.</p>';
                     return;
                 }
 
-                // Render components inside the view panel and map canvas
                 filteredBusesList.forEach(item => {
-                    renderBusCard(item);
-                    renderBusMarker(item.busNo, item.data);
+                    renderBusUiCard(item);
+                    renderBusMapMarker(item.busNo, item.data);
                 });
             });
         }
 
-        // 5. Render list items inside the left side scroll panel
-        function renderBusCard(item) {
+        function renderBusUiCard(item) {
             const container = document.getElementById("busContainerList");
             let priorityClass = item.priorityLevel === 1 ? "priority-1" : "priority-2";
-            let badgeText = item.priorityLevel === 1 ? "★ Direct Stop Bus" : "✔ Passing Through Route";
+            let badgeText = item.priorityLevel === 1 ? "★ Direct Stop Bus" : "✔ Route Passing";
             let badgeClass = item.priorityLevel === 1 ? "tag-p1" : "tag-p2";
 
             const card = document.createElement("div");
@@ -240,8 +225,8 @@
                     <span>Bus #${item.busNo}</span>
                     <span class="tag-badge ${badgeClass}">${badgeText}</span>
                 </div>
-                <div style="font-size: 13px; color: #94a3b8;">
-                    <strong>Path:</strong> ${item.data.sourceName} ➔ ${item.data.destName}
+                <div style="font-size: 12px; color: #94a3b8;">
+                    <strong>Route:</strong> ${item.data.sourceName} ➔ ${item.data.destName}
                 </div>
                 <div class="metrics-grid">
                     <div class="metric-item ${item.priorityLevel === 1 ? 'p1-text' : ''}">
@@ -262,11 +247,10 @@
             container.appendChild(card);
         }
 
-        // 6. Map pin plotting utilities
-        function renderBusMarker(busNo, data) {
+        function renderBusMapMarker(busNo, data) {
             const latLng = [data.latitude, data.longitude];
             const marker = L.marker(latLng).addTo(map)
-                .bindPopup(`<b>Bus #${busNo}</b><br>Next Destination: ${data.destName}<br>Last Update: ${data.lastUpdated || 'Just Now'}`);
+                .bindPopup(`<b>Bus #${busNo}</b><br>Destination: ${data.destName}<br>Last Active: ${data.lastUpdated || 'Just Now'}`);
             activeMapMarkers[busNo] = marker;
         }
 
