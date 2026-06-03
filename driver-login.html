@@ -1,121 +1,172 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<title>Driver Login</title>
-<link rel="stylesheet" href="style.css">
+    <title>Driver Control Panel</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header-bar { background: #003366; padding: 12px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .form-wrapper { max-width: 420px; background: white; margin: 40px auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        select, input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        .stops-box { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 5px; text-align: left; max-height: 200px; overflow-y: auto; margin: 15px 0; }
+        .stop-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 15px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px; color: white; margin-top: 10px; }
+        .btn-primary { background: #003366; }
+        .btn-success { background: #28a745; }
+        .hidden { display: none; }
+    </style>
 </head>
-
 <body>
 
-<h2>Driver Login</h2>
-<div class="header-container">
-    <div class="logo-wrapper">
-        <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" alt="Vignan Logo" class="vignan-logo">
+    <div class="header-bar">
+        <span style="font-weight: bold;">🚌 Vignan Driver Panel</span>
+        <button onclick="logoutUser()" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Logout</button>
     </div>
-    <nav class="navbar">
-        <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="student-login.html">Student Login</a></li>
-            <li><a href="student-signup.html">Student Signup</a></li>
-            <li><a href="driver-login.html">Driver Login</a></li>
-            <li><a href="driver-signup.html">Driver Signup</a></li>
-        </ul>
-    </nav>
-</div>
-    <div style="background: #003366; padding: 10px; display: flex; justify-content: space-between; align-items: center; color: white;">
-        <span style="font-weight: bold;">Vignan Tracker</span>
-        <button onclick="logoutUser()" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
-            Logout
-        </button>
+
+    <div class="form-wrapper" id="step1">
+        <h2>Driver Shift Check-In</h2>
+        <input type="number" id="driverid" placeholder="Enter Driver ID">
+        <input type="number" id="busno" placeholder="Enter Bus Number (e.g., 1, 2, 3)">
+        
+        <label style="display:block; text-align:left; margin-top:10px;"><b>Source:</b></label>
+        <select id="sourceSelect">
+            <option value="">-- Choose Starting Point --</option>
+            <option value="Uppal">Uppal</option>
+            <option value="Secunderabad">Secunderabad</option>
+            <option value="Koti">Koti</option>
+        </select>
+
+        <label style="display:block; text-align:left; margin-top:10px;"><b>Destination:</b></label>
+        <select id="destSelect">
+            <option value="">-- Choose Campus Terminus --</option>
+            <option value="Vignan Campus">Vignan Campus</option>
+        </select>
+
+        <button class="btn btn-primary" onclick="goToStep2()">Next: Select Stops ➡️</button>
     </div>
-<script>
-    function toggleMenu() {
-        document.getElementById("navLinks").classList.toggle("active");
-    }
-</script>
 
+    <div class="form-wrapper hidden" id="step2">
+        <h2>Select Route Stops</h2>
+        <p style="color: #555; font-size:14px;">Choose the locations this bus will pick up students from today:</p>
+        
+        <div class="stops-box" id="middleStopsArea"></div>
 
-
-<div class="form-wrapper">
-    <h2>Driver Login</h2>
-    <input type="number" id="driverid" placeholder="Enter Driver ID (e.g. 105)">
-    <input type="number" id="busno" placeholder="Enter Bus Number (e.g. 1)">
-    <button onclick="startBus()">Start Tracking</button>
-
-    <script type="module" src="driver-login.js"></script>
-
-    <div class="forgot-link" style="margin-top: 15px;">
-        <a href="#" onclick="showForgotMsg()">Forgot Password?</a>
+        <button class="btn btn-success" onclick="startBusTracking()">Submit & Start Live Broadcast</button>
+        <button class="btn" style="background:#6c757d;" onclick="backToStep1()">⬅️ Back</button>
     </div>
-</div>
 
-<script>
-    function showForgotMsg() {
-        alert("Vignan Transport Security Notice:\n\nPlease visit the Admin Office at the Main Block to reset your credentials.");
-    }
-</script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+            projectId: "bus-tracking-system-78e94",
+            storageBucket: "bus-tracking-system-78e94.appspot.com",
+            messagingSenderId: "316084412095",
+            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
+        };
 
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        var watchID = null;
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+        const routeStopsMaster = {
+            "Uppal-Vignan Campus": ["LB Nagar", "Dilsukhnagar"],
+            "Secunderabad-Vignan Campus": ["Koti", "Dilsukhnagar", "LB Nagar"],
+            "Koti-Vignan Campus": ["Dilsukhnagar", "LB Nagar"]
+        };
 
+        window.goToStep2 = function() {
+            const dId = document.getElementById("driverid").value.trim();
+            const bNo = document.getElementById("busno").value.trim();
+            const src = document.getElementById("sourceSelect").value;
+            const dest = document.getElementById("destSelect").value;
 
-<script>
+            if (!dId || !bNo || !src || !dest) {
+                alert("Please fill out all credentials and selections.");
+                return;
+            }
 
-const firebaseConfig = {
-apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-projectId: "bus-tracking-system-78e94"
-};
+            // Verify driver exists
+            db.ref('drivers/' + dId).once('value', function(snapshot) {
+                if (!snapshot.exists()) {
+                    alert("Driver ID not registered in system.");
+                    return;
+                }
 
-firebase.initializeApp(firebaseConfig);
+                // Render stops
+                const container = document.getElementById("middleStopsArea");
+                container.innerHTML = "";
+                const routeKey = `${src}-${dest}`;
+                const options = routeStopsMaster[routeKey] || [];
 
-const db = firebase.database();
+                if (options.length === 0) {
+                    container.innerHTML = "<p style='color:red;'>No stops registered for this route combination.</p>";
+                } else {
+                    options.forEach(stop => {
+                        container.innerHTML += `
+                            <div class="stop-row">
+                                <input type="checkbox" name="midStop" value="${stop}" id="chk_${stop}">
+                                <label for="chk_${stop}">${stop}</label>
+                            </div>
+                        `;
+                    });
+                }
 
+                document.getElementById("step1").classList.add("hidden");
+                document.getElementById("step2").classList.remove("hidden");
+            });
+        };
 
-function driverStart(){
+        window.backToStep1 = function() {
+            document.getElementById("step2").classList.add("hidden");
+            document.getElementById("step1").classList.remove("hidden");
+        };
 
-var driver = document.getElementById("driverid").value;
-var bus = document.getElementById("busno").value;
-var phone = document.getElementById("phone").value;
+        window.startBusTracking = function() {
+            const dId = document.getElementById("driverid").value.trim();
+            const bNo = document.getElementById("busno").value.trim();
+            const src = document.getElementById("sourceSelect").value;
+            const dest = document.getElementById("destSelect").value;
 
+            let finalRouteSequence = [src];
+            document.querySelectorAll('input[name="midStop"]:checked').forEach(cb => {
+                finalRouteSequence.push(cb.value);
+            });
+            finalRouteSequence.push(dest);
 
-navigator.geolocation.watchPosition(function(position){
+            db.ref('drivers/' + dId).once('value', function(snapshot) {
+                const driverInfo = snapshot.val();
 
-var lat = position.coords.latitude;
-var lng = position.coords.longitude;
+                if (navigator.geolocation) {
+                    alert("Route submitted! Broadcast engine initialized.");
+                    
+                    watchID = navigator.geolocation.watchPosition(function(pos) {
+                        db.ref('buses/' + bNo).update({
+                            dId: parseInt(dId),
+                            phone: driverInfo.phone || "N/A",
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            source: src,
+                            destination: dest,
+                            todayRouteStops: finalRouteSequence,
+                            lastUpdated: new Date().toLocaleTimeString()
+                        });
+                    }, function(err) { console.error(err); }, { enableHighAccuracy: true });
 
+                    document.getElementById("step2").innerHTML = `<h3>Tracking Active</h3><p>Bus #${bNo} is broadcasting live parameters. Keep this tab open.</p>`;
+                }
+            });
+        };
 
-db.ref("buses/"+bus).set({
-
-driverName:driver,
-phone:phone,
-lat:lat,
-lng:lng
-
-});
-
-});
-
-alert("Bus tracking started");
-
-}
-
-</script>
-
+        window.logoutUser = function() {
+            if (confirm("Terminate broadcast shifts?")) {
+                if (watchID) navigator.geolocation.clearWatch(watchID);
+                window.location.href = "index.html";
+            }
+        };
+    </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
