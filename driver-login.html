@@ -22,151 +22,73 @@
         <button onclick="logoutUser()" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Logout</button>
     </div>
 
-    <div class="form-wrapper" id="step1">
-        <h2>Driver Shift Check-In</h2>
-        <input type="number" id="driverid" placeholder="Enter Driver ID">
-        <input type="number" id="busno" placeholder="Enter Bus Number (e.g., 1, 2, 3)">
+    <div class="form-wrapper">
+    <h2>Dynamic Route Setup</h2>
+    <input type="number" id="driverid" placeholder="Enter Driver ID">
+    <input type="number" id="busno" placeholder="Enter Bus Number">
+
+    <label><b>Source Stop Name:</b></label>
+    <input type="text" id="sourceInput" placeholder="e.g., Uppal Circle, Hyderabad">
+    
+    <label><b>Destination Stop Name:</b></label>
+    <input type="text" id="destInput" placeholder="e.g., Vignan Institute, Deshmukhi">
+
+    <button class="btn btn-primary" onclick="verifyAndStartShift()">Start Shift</button>
+</div>
+
+<script>
+async function getCoordinatesFromText(addressText) {
+    // We append ", Hyderabad" to make sure it searches within our city limits
+    const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText + ", Hyderabad")}`;
+    
+    try {
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return {
+                lat: parseFloat(data[0].lat),
+                lng: parseFloat(data[0].lon)
+            };
+        } else {
+            alert("Could not find coordinates for: " + addressText);
+            return null;
+        }
+    } catch (error) {
+        console.error("Geocoding Error: ", error);
+        return null;
+    }
+}
+
+async function verifyAndStartShift() {
+    const dId = document.getElementById("driverid").value;
+    const bNo = document.getElementById("busno").value;
+    const sourceText = document.getElementById("sourceInput").value;
+    const destText = document.getElementById("destInput").value;
+
+    if(!sourceText || !destText) {
+        alert("Please specify route stops");
+        return;
+    }
+
+    // Automatically fetch coordinates from OpenStreetMap servers on the fly!
+    const sourceCoords = await getCoordinatesFromText(sourceText);
+    const destCoords = await getCoordinatesFromText(destText);
+
+    if (sourceCoords && destCoords) {
+        // Save the coordinates directly under today's route data tree
+        db.ref('buses/' + bNo).update({
+            dId: parseInt(dId),
+            sourceName: sourceText,
+            sourceLat: sourceCoords.lat,
+            sourceLng: sourceCoords.lng,
+            destName: destText,
+            destLat: destCoords.lat,
+            destLng: destCoords.lng,
+            lastUpdated: new Date().toLocaleTimeString()
+        });
         
-        <label style="display:block; text-align:left; margin-top:10px;"><b>Source:</b></label>
-        <select id="sourceSelect">
-            <option value="">-- Choose Starting Point --</option>
-            <option value="Uppal">Uppal</option>
-            <option value="Secunderabad">Secunderabad</option>
-            <option value="Koti">Koti</option>
-        </select>
-
-        <label style="display:block; text-align:left; margin-top:10px;"><b>Destination:</b></label>
-        <select id="destSelect">
-            <option value="">-- Choose Campus Terminus --</option>
-            <option value="Vignan Campus">Vignan Campus</option>
-        </select>
-
-        <button class="btn btn-primary" onclick="goToStep2()">Next: Select Stops ➡️</button>
-    </div>
-
-    <div class="form-wrapper hidden" id="step2">
-        <h2>Select Route Stops</h2>
-        <p style="color: #555; font-size:14px;">Choose the locations this bus will pick up students from today:</p>
-        
-        <div class="stops-box" id="middleStopsArea"></div>
-
-        <button class="btn btn-success" onclick="startBusTracking()">Submit & Start Live Broadcast</button>
-        <button class="btn" style="background:#6c757d;" onclick="backToStep1()">⬅️ Back</button>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-            projectId: "bus-tracking-system-78e94",
-            storageBucket: "bus-tracking-system-78e94.appspot.com",
-            messagingSenderId: "316084412095",
-            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        var watchID = null;
-
-        const routeStopsMaster = {
-            "Uppal-Vignan Campus": ["LB Nagar", "Dilsukhnagar"],
-            "Secunderabad-Vignan Campus": ["Koti", "Dilsukhnagar", "LB Nagar"],
-            "Koti-Vignan Campus": ["Dilsukhnagar", "LB Nagar"]
-        };
-
-        window.goToStep2 = function() {
-            const dId = document.getElementById("driverid").value.trim();
-            const bNo = document.getElementById("busno").value.trim();
-            const src = document.getElementById("sourceSelect").value;
-            const dest = document.getElementById("destSelect").value;
-
-            if (!dId || !bNo || !src || !dest) {
-                alert("Please fill out all credentials and selections.");
-                return;
-            }
-
-            // Verify driver exists
-            db.ref('drivers/' + dId).once('value', function(snapshot) {
-                if (!snapshot.exists()) {
-                    alert("Driver ID not registered in system.");
-                    return;
-                }
-
-                // Render stops
-                const container = document.getElementById("middleStopsArea");
-                container.innerHTML = "";
-                const routeKey = `${src}-${dest}`;
-                const options = routeStopsMaster[routeKey] || [];
-
-                if (options.length === 0) {
-                    container.innerHTML = "<p style='color:red;'>No stops registered for this route combination.</p>";
-                } else {
-                    options.forEach(stop => {
-                        container.innerHTML += `
-                            <div class="stop-row">
-                                <input type="checkbox" name="midStop" value="${stop}" id="chk_${stop}">
-                                <label for="chk_${stop}">${stop}</label>
-                            </div>
-                        `;
-                    });
-                }
-
-                document.getElementById("step1").classList.add("hidden");
-                document.getElementById("step2").classList.remove("hidden");
-            });
-        };
-
-        window.backToStep1 = function() {
-            document.getElementById("step2").classList.add("hidden");
-            document.getElementById("step1").classList.remove("hidden");
-        };
-
-        window.startBusTracking = function() {
-            const dId = document.getElementById("driverid").value.trim();
-            const bNo = document.getElementById("busno").value.trim();
-            const src = document.getElementById("sourceSelect").value;
-            const dest = document.getElementById("destSelect").value;
-
-            let finalRouteSequence = [src];
-            document.querySelectorAll('input[name="midStop"]:checked').forEach(cb => {
-                finalRouteSequence.push(cb.value);
-            });
-            finalRouteSequence.push(dest);
-
-            db.ref('drivers/' + dId).once('value', function(snapshot) {
-                const driverInfo = snapshot.val();
-
-                if (navigator.geolocation) {
-                    alert("Route submitted! Broadcast engine initialized.");
-                    
-                    watchID = navigator.geolocation.watchPosition(function(pos) {
-                        db.ref('buses/' + bNo).update({
-                            dId: parseInt(dId),
-                            phone: driverInfo.phone || "N/A",
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude,
-                            source: src,
-                            destination: dest,
-                            todayRouteStops: finalRouteSequence,
-                            lastUpdated: new Date().toLocaleTimeString()
-                        });
-                    }, function(err) { console.error(err); }, { enableHighAccuracy: true });
-
-                    document.getElementById("step2").innerHTML = `<h3>Tracking Active</h3><p>Bus #${bNo} is broadcasting live parameters. Keep this tab open.</p>`;
-                }
-            });
-        };
-
-        window.logoutUser = function() {
-            if (confirm("Terminate broadcast shifts?")) {
-                if (watchID) navigator.geolocation.clearWatch(watchID);
-                window.location.href = "index.html";
-            }
-        };
-    </script>
-</body>
+        // Start your standard navigator.geolocation.watchPosition loop here...
+    }
+}
+</script></body>
 </html>
