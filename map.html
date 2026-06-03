@@ -1,43 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Vignan Student Tracking View</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VignanITS Student Portal - Live Tracking</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        body { margin: 0; font-family: sans-serif; background: #f4f6f9; }
-        .header-bar { background: #003366; padding: 12px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        .login-panel { max-width: 400px; background: white; margin: 50px auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        #map { height: 550px; width: 95%; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        :root {
+            --vignan-dark: #0b1329;
+            --vignan-card: #1c2541;
+            --vignan-teal: #5bc0be;
+            --vignan-orange: #ff6b00;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--vignan-dark); color: #f8fafc; padding: 20px; }
+        .container { max-width: 500px; background: var(--vignan-card); margin: 60px auto; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid #3a506b; text-align: center; }
+        
+        h2 { margin-top: 0; color: white; }
+        select { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #475569; background: #0b1329; color: white; border-radius: 6px; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; background: var(--vignan-orange); color: white; transition: background 0.2s; }
+        .btn:hover { background: #e05e00; }
+
+        /* Main Map Layout (Hidden initially) */
+        .main-layout { display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; gap: 20px; }
+        @media(min-width: 768px) { .main-layout { flex-direction: row; } }
+        
+        .dashboard-panel { flex: 1; background: var(--vignan-card); border-radius: 12px; padding: 20px; border: 1px solid #3a506b; height: 550px; overflow-y: auto; box-sizing: border-box; }
+        .panel-title { font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #3a506b; padding-bottom: 10px; margin-top: 0; color: #cbd5e1; }
+        
+        .bus-card { background: #0b1329; border: 1px solid #3a506b; border-radius: 8px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; border-left: 5px solid #64748b; }
+        .bus-card:hover { transform: translateY(-2px); border-color: var(--vignan-teal); }
+        .bus-card.priority-1 { border-left-color: var(--vignan-orange); background: linear-gradient(to right, #2a1b10, #0b1329); }
+        .bus-card.priority-2 { border-left-color: var(--vignan-teal); }
+        
+        .bus-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 8px; }
+        .tag-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .tag-p1 { background: var(--vignan-orange); color: white; }
+        .tag-p2 { background: var(--vignan-teal); color: #0b1329; }
+        
+        .metrics-grid { display: flex; gap: 15px; margin-top: 10px; background: #1c2541; padding: 8px; border-radius: 6px; font-size: 13px; }
+        .metric-item { flex: 1; text-align: center; }
+        .metric-item span { display: block; font-size: 15px; font-weight: bold; color: var(--vignan-teal); }
+        .metric-item.p1-text span { color: var(--vignan-orange); }
+
+        .map-wrapper { flex: 2; height: 550px; border-radius: 12px; overflow: hidden; border: 1px solid #3a506b; }
+        #map { width: 100%; height: 100%; }
         .hidden { display: none; }
-        .bus-icon { font-size: 32px; text-align: center; line-height: 35px; }
+        .no-buses { text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="header-bar">
-        <span style="font-weight: bold;">🚌 Vignan Student Portal</span>
-        <button onclick="logoutUser()" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Logout</button>
+    <div class="container" id="selectionScreen">
+        <h2>Welcome to VignanITS Portal</h2>
+        <p style="color: #94a3b8; font-size: 14px;">Select your boarding stop to scan for oncoming buses:</p>
+        <select id="studentStopDropdown"><option value="">Loading stops from database...</option></select>
+        <button class="btn" onclick="initializeTrackingDashboard()">Track Live Buses ➡️</button>
     </div>
 
-    <div class="login-panel" id="studentAuthBox">
-        <h2>Access Live Tracker</h2>
-        <input type="text" id="studentRoll" placeholder="Enter Registration Roll Number">
-        
-        <label style="display:block; text-align:left; margin-top:10px;"><b>Select Your Boarding Stop:</b></label>
-        <select id="studentStopSelect">
-            <option value="">-- Fetching Active Options --</option>
-        </select>
-        
-        <button onclick="initializeStudentMap()" style="width:100%; padding:12px; background:#003366; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Initialize Map</button>
+    <div class="main-layout hidden" id="trackingDashboard">
+        <div class="dashboard-panel">
+            <h2 class="panel-title" id="panelHeaderTitle">Available Fleet</h2>
+            <div id="busContainerList"><p class="no-buses">Scanning active vehicle broadcasts...</p></div>
+        </div>
+        <div class="map-wrapper">
+            <div id="map"></div>
+        </div>
     </div>
 
-    <div id="mapContainer" class="hidden">
-        <h3 style="text-align:center; color:#333;" id="welcomeMsg"></h3>
-        <div id="map"></div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -55,135 +87,195 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        var map, targetStopLat, targetStopLng, selectedStopName;
-        var markers = {};
-        var routeLines = {};
-        var busIcon = L.divIcon({ html: '🚌', iconSize: [35, 35], className: "bus-icon" });
+        let locationDatabaseCache = {};
+        let selectedStudentStop = "";
+        let map = null;
+        let activeMapMarkers = {};
 
-        // Populate student option menu items straight from your Firebase keys database tree node
+        // 1. Fetch entire location catalog with geo-coordinates on startup
         db.ref("locations").once("value", function(snapshot) {
-            if(snapshot.exists()) {
-                const selectElement = document.getElementById("studentStopSelect");
-                let listHtml = `<option value="">-- Choose Your Stop --</option>`;
+            if (snapshot.exists()) {
+                const dropdown = document.getElementById("studentStopDropdown");
+                dropdown.innerHTML = `<option value="">-- Choose Your Stop --</option>`;
+                
                 snapshot.forEach(child => {
-                    listHtml += `<option value="${child.key}">${child.key}</option>`;
+                    locationDatabaseCache[child.key] = child.val();
+                    dropdown.innerHTML += `<option value="${child.key}">${child.key}</option>`;
                 });
-                selectElement.innerHTML = listHtml;
             }
         });
 
-        window.initializeStudentMap = function() {
-            const roll = document.getElementById("studentRoll").value.trim();
-            selectedStopName = document.getElementById("studentStopSelect").value;
+        // 2. Haversine Formula to compute real distance between two points
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; 
+        }
 
-            if (!roll || !selectedStopName) {
-                alert("Please complete authorization inputs.");
-                return;
-            }
+        // 3. Switch screen contexts and activate map tracking listeners
+        window.initializeTrackingDashboard = function() {
+            selectedStudentStop = document.getElementById("studentStopDropdown").value;
+            if (!selectedStudentStop) { alert("Please select a valid stop point."); return; }
 
-            db.ref("locations/" + selectedStopName).once("value", function(snap) {
-                if (!snap.exists()) return;
-                
-                targetStopLat = snap.val().lat;
-                targetStopLng = snap.val().lng;
+            document.getElementById("selectionScreen").classList.add("hidden");
+            document.getElementById("trackingDashboard").classList.remove("hidden");
+            document.getElementById("panelHeaderTitle").innerText = `Buses for ${selectedStudentStop}`;
 
-                document.getElementById("studentAuthBox").classList.add("hidden");
-                document.getElementById("mapContainer").classList.remove("hidden");
-                document.getElementById("welcomeMsg").innerText = `Tracking buses near ${selectedStopName} for Student ${roll}`;
+            // Initialize Map object instance
+            const stopGeo = locationDatabaseCache[selectedStudentStop] || { latitude: 17.2584, longitude: 78.8741 };
+            map = L.map('map').setView([stopGeo.latitude, stopGeo.longitude], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; Leaflet' }).addTo(map);
 
-                // Setup the Map centered on the student's stop location point
-                map = L.map('map').setView([targetStopLat, targetStopLng], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+            // Mark student's home base stop on map
+            L.marker([stopGeo.latitude, stopGeo.longitude], {
+                icon: L.divIcon({ html: '📍', className: 'student-home-icon', iconSize: [24, 24] })
+            }).addTo(map).bindPopup(`<b>Your Selected Stop: ${selectedStudentStop}</b>`).openPopup();
 
-                // Add student stop marker pins
-                L.marker([targetStopLat, targetStopLng]).addTo(map)
-                    .bindPopup(`<b>📍 Your Stop: ${selectedStopName}</b>`).openPopup();
-
-                startFleetTrackingListener();
-            });
+            startRealtimeFirebaseListener();
         };
 
-        function startFleetTrackingListener() {
+        // 4. Core filtering, sequence verification and sorting engine
+        function startRealtimeFirebaseListener() {
             db.ref("buses").on("value", function(snapshot) {
-                const data = snapshot.val();
-                if (!data) return;
+                const listContainer = document.getElementById("busContainerList");
+                listContainer.innerHTML = "";
+                
+                // Clear existing map layers safely before recalculating positions
+                clearAllMarkers();
 
-                for (let id in data) {
-                    const bus = data[id];
-                    let liveLat = parseFloat(bus.latitude);
-                    let liveLng = parseFloat(bus.longitude);
-        
-                    if (isNaN(liveLat) || isNaN(liveLng)) continue;
-
-                    // Calculate proximity range radius metric boundaries
-                    let distanceToStop = calculateHaversine(targetStopLat, targetStopLng, liveLat, liveLng);
-
-                    // Visualize if inside proximity limits (5.0 km radius check)
-                    if (parseFloat(distanceToStop) <= 5.0) {
-                        
-                        if (markers[id]) {
-                            markers[id].setLatLng([liveLat, liveLng]);
-                        } else {
-                            markers[id] = L.marker([liveLat, liveLng], { icon: busIcon }).addTo(map);
-                        }
-
-                        // Trace and connect today's ordered multi-stop checkpoint lists
-                        if (bus.todayRouteStops && bus.todayRouteStops.length > 0) {
-                            if (routeLines[id]) map.removeLayer(routeLines[id]);
-
-                            let pathCoordinates = [];
-                            let promises = bus.todayRouteStops.map(stopName => {
-                                return db.ref("locations/" + stopName).once("value", function(lSnap) {
-                                    if (lSnap.exists()) {
-                                        pathCoordinates.push([lSnap.val().lat, lSnap.val().lng]);
-                                    }
-                                });
-                            });
-
-                            // Re-draw the connecting polyline once all coordinates are fetched
-                            Promise.all(promises).then(() => {
-                                if (pathCoordinates.length > 1) {
-                                    routeLines[id] = L.polyline(pathCoordinates, {
-                                        color: '#003366', 
-                                        weight: 5, 
-                                        opacity: 0.75,
-                                        lineCap: 'round'
-                                    }).addTo(map);
-                                }
-                            });
-                        }
-
-                        // Detailed interactive popups with direct clickable phone integrations
-                        markers[id].bindPopup(`
-                            <div style="text-align:center; font-family:Arial, sans-serif; min-width:160px;">
-                                <h3 style="margin:2px 0; color:#003366;">Vignan Bus #${id}</h3>
-                                <p style="margin:4px 0; font-size:13px;"><b>Route:</b> ${bus.sourceName || 'N/A'} ➡️ ${bus.destName || 'N/A'}</p>
-                                <p style="margin:4px 0; font-size:13px; color:#d9534f;"><b>Distance:</b> ${distanceToStop} km away</p>
-                                <p style="margin:2px 0; font-size:12px; color:gray;">Driver ID Ref: ${bus.dId || 'N/A'}</p>
-                                <hr style="border:0; border-top:1px solid #eee; margin:6px 0;">
-                                <a href="tel:${bus.phone || ''}" style="display:block; background:#28a745; color:white; padding:8px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px; text-align:center;">📞 Call Driver</a>
-                            </div>
-                        `);
-                    } else {
-                        // Clean up markers if the bus is outside the 5km radius
-                        if (markers[id]) { map.removeLayer(markers[id]); delete markers[id]; }
-                        if (routeLines[id]) { map.removeLayer(routeLines[id]); delete routeLines[id]; }
-                    }
+                if (!snapshot.exists()) {
+                    listContainer.innerHTML = '<p class="no-buses">No service buses active right now.</p>';
+                    return;
                 }
+
+                let filteredBusesList = [];
+                const studentStopGeo = locationDatabaseCache[selectedStudentStop];
+
+                snapshot.forEach(child => {
+                    const busNo = child.key;
+                    const busData = child.val();
+                    const routeArray = busData.todayRouteStops || [];
+
+                    if (!busData.latitude || !busData.longitude || !routeArray.includes(selectedStudentStop)) {
+                        return; // Skip if bus doesn't track this stop or lacks GPS data
+                    }
+
+                    // A. Determine the bus's chronological position along its route line
+                    let closestStopIndex = 0;
+                    let minimumDistanceFound = Infinity;
+
+                    routeArray.forEach((stopName, index) => {
+                        const stopCoords = locationDatabaseCache[stopName];
+                        if (stopCoords) {
+                            let d = calculateHaversineDistance(busData.latitude, busData.longitude, stopCoords.latitude, stopCoords.longitude);
+                            if (d < minimumDistanceFound) {
+                                minimumDistanceFound = d;
+                                closestStopIndex = index;
+                            }
+                        }
+                    });
+
+                    let studentStopIndex = routeArray.indexOf(selectedStudentStop);
+
+                    // CRITICAL FILTER: If current closest index is greater than student's stop index, the bus already passed it!
+                    if (closestStopIndex > studentStopIndex) {
+                        return; // Drop bus from list entirely!
+                    }
+
+                    // B. Compute Distance and ETA metrics
+                    let distanceKM = calculateHaversineDistance(busData.latitude, busData.longitude, studentStopGeo.latitude, studentStopGeo.longitude);
+                    
+                    // Assume typical college bus speed is roughly 30 km/hr (ETA in minutes = distance * 2)
+                    let etaMinutes = Math.round(distanceKM * 2);
+                    if (etaMinutes < 1) etaMinutes = "Arriving Now";
+                    else etaMinutes = `${etaMinutes} mins`;
+
+                    // C. Classify Priority Tiers
+                    let priorityLevel = 2; // Default Route Match priority
+                    if (busData.sourceName === selectedStudentStop || busData.destName === selectedStudentStop) {
+                        priorityLevel = 1; // Direct Terminus/Stop Match Priority
+                    }
+
+                    filteredBusesList.push({
+                        busNo,
+                        data: busData,
+                        priorityLevel,
+                        distance: distanceKM.toFixed(2) + " km",
+                        eta: etaMinutes
+                    });
+                });
+
+                // Sort lists natively: Priority 1 explicitly positioned above Priority 2 matches
+                filteredBusesList.sort((a, b) => a.priorityLevel - b.priorityLevel);
+
+                if (filteredBusesList.length === 0) {
+                    listContainer.innerHTML = '<p class="no-buses">No upcoming buses heading towards your stop at this time.</p>';
+                    return;
+                }
+
+                // Render components inside the view panel and map canvas
+                filteredBusesList.forEach(item => {
+                    renderBusCard(item);
+                    renderBusMarker(item.busNo, item.data);
+                });
             });
         }
 
-        function calculateHaversine(lat1, lon1, lat2, lon2) {
-            let R = 6371; 
-            let dLat = (lat2 - lat1) * Math.PI / 180;
-            let dLon = (lon2 - lon1) * Math.PI / 180;
-            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(2);
+        // 5. Render list items inside the left side scroll panel
+        function renderBusCard(item) {
+            const container = document.getElementById("busContainerList");
+            let priorityClass = item.priorityLevel === 1 ? "priority-1" : "priority-2";
+            let badgeText = item.priorityLevel === 1 ? "★ Direct Stop Bus" : "✔ Passing Through Route";
+            let badgeClass = item.priorityLevel === 1 ? "tag-p1" : "tag-p2";
+
+            const card = document.createElement("div");
+            card.className = `bus-card ${priorityClass}`;
+            card.innerHTML = `
+                <div class="bus-header">
+                    <span>Bus #${item.busNo}</span>
+                    <span class="tag-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div style="font-size: 13px; color: #94a3b8;">
+                    <strong>Path:</strong> ${item.data.sourceName} ➔ ${item.data.destName}
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-item ${item.priorityLevel === 1 ? 'p1-text' : ''}">
+                        <span>${item.distance}</span> Distance
+                    </div>
+                    <div class="metric-item ${item.priorityLevel === 1 ? 'p1-text' : ''}">
+                        <span>${item.eta}</span> Time to Reach
+                    </div>
+                </div>
+            `;
+
+            card.onclick = function() {
+                if (activeMapMarkers[item.busNo]) {
+                    map.setView(activeMapMarkers[item.busNo].getLatLng(), 15);
+                    activeMapMarkers[item.busNo].openPopup();
+                }
+            };
+            container.appendChild(card);
         }
 
-        window.logoutUser = function() { window.location.href = "index.html"; };
+        // 6. Map pin plotting utilities
+        function renderBusMarker(busNo, data) {
+            const latLng = [data.latitude, data.longitude];
+            const marker = L.marker(latLng).addTo(map)
+                .bindPopup(`<b>Bus #${busNo}</b><br>Next Destination: ${data.destName}<br>Last Update: ${data.lastUpdated || 'Just Now'}`);
+            activeMapMarkers[busNo] = marker;
+        }
+
+        function clearAllMarkers() {
+            for (let id in activeMapMarkers) {
+                map.removeLayer(activeMapMarkers[id]);
+            }
+            activeMapMarkers = {};
+        }
     </script>
 </body>
 </html>
