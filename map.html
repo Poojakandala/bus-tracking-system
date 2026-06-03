@@ -1,101 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bus Tracking Map</title>
+    <title>Vignan Student Tracking View</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <style>
-        body { margin: 0; font-family: sans-serif; }
-        #map { height: 500px; width: 95%; margin: 20px auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-        .bus-icon { font-size: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        body { margin: 0; font-family: sans-serif; background: #f4f6f9; }
         .header-bar { background: #003366; padding: 12px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .login-panel { max-width: 400px; background: white; margin: 50px auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        #map { height: 550px; width: 95%; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .hidden { display: none; }
+        .bus-icon { font-size: 32px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="header-bar">
-        <span style="font-size: 1.2rem; font-weight: bold;">🚌 Vignan Bus Tracker</span>
-        <button class="logout-btn" onclick="logoutUser()">Logout</button>
+        <span style="font-weight: bold;">🚌 Vignan Student Portal</span>
+        <button onclick="logoutUser()" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Logout</button>
     </div>
 
-    <h2 align="center">Live College Bus Locations</h2>
-    <div id="map"></div>
+    <div class="login-panel" id="studentAuthBox">
+        <h2>Access Live Tracker</h2>
+        <input type="text" id="studentRoll" placeholder="Enter Registration Roll Number">
+        
+        <label style="display:block; text-align:left; margin-top:10px;"><b>Select Your Boarding Stop:</b></label>
+        <select id="studentStopSelect">
+            <option value="">-- Select Your Stop --</option>
+            <option value="Uppal">Uppal</option>
+            <option value="Secunderabad">Secunderabad</option>
+            <option value="Koti">Koti</option>
+            <option value="Dilsukhnagar">Dilsukhnagar</option>
+            <option value="LB Nagar">LB Nagar</option>
+        </select>
+        
+        <button onclick="initializeStudentMap()" style="width:100%; padding:12px; background:#003366; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Initialize Map</button>
+    </div>
+
+    <div id="mapContainer" class="hidden">
+        <h3 style="text-align:center; color:#333;" id="welcomeMsg"></h3>
+        <div id="map"></div>
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-        authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-        databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-        projectId: "bus-tracking-system-78e94",
-        storageBucket: "bus-tracking-system-78e94.appspot.com",
-        messagingSenderId: "316084412095",
-        appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
+            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
+            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
+            projectId: "bus-tracking-system-78e94",
+            storageBucket: "bus-tracking-system-78e94.appspot.com",
+            messagingSenderId: "316084412095",
+            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    // Initialize Map
-    var map = L.map('map').setView([17.4435, 78.441], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        var map, targetStopLat, targetStopLng, selectedStopName;
+        var markers = {};
+        var routeLines = {};
+        var busIcon = L.divIcon({ html: '🚌', iconSize: [35, 35], className: "bus-icon" });
 
-    // Custom Bus Emoji Icon
-    var busIcon = L.divIcon({ 
-        html: '<div style="font-size: 30px;">🚌</div>', 
-        iconSize: [30, 30], 
-        className: "bus-icon" 
-    });
+        window.initializeStudentMap = function() {
+            const roll = document.getElementById("studentRoll").value.trim();
+            selectedStopName = document.getElementById("studentStopSelect").value;
 
-    var markers = {}; // Store multiple bus markers
-
-    // Listen to the entire 'buses' node to find IDs 1, 2, 3
-    db.ref("buses").on("value", function(snapshot) {
-        const busesData = snapshot.val();
-        if (!busesData) return;
-
-        for (let id in busesData) {
-            const bus = busesData[id];
-            
-            // Fix: Ensure coordinates are numbers
-            let bLat = parseFloat(bus.latitude);
-            let bLng = parseFloat(bus.longitude);
-
-            if (!isNaN(bLat) && !isNaN(bLng)) {
-                if (markers[id]) {
-                    // Update existing marker position
-                    markers[id].setLatLng([bLat, bLng]);
-                } else {
-                    // Create new bus emoji marker
-                    markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
-                    
-                    // Auto-focus on the bus location
-                    map.flyTo([bLat, bLng], 15);
-                }
-
-                // Popup with driver details when clicked
-                markers[id].bindPopup(`
-                    <div style="text-align:center;">
-                        <b>Bus Number: ${id}</b><br>
-                        Driver ID: ${bus.dId || 'N/A'}<br>
-                        <a href="tel:${bus.phone}" style="display:block; background:#28a745; color:white; padding:8px; margin-top:5px; text-decoration:none; border-radius:5px;">📞 Call Driver</a>
-                    </div>
-                `);
+            if (!roll || !selectedStopName) {
+                alert("Please enter your Roll Number and select a Boarding Stop.");
+                return;
             }
-        }
-    });
 
-    // Logout Function
-    window.logoutUser = function() {
-        if (confirm("Are you sure you want to logout?")) {
-            window.location.href = "index.html";
+            // Fetch the coordinates of the selected boarding stop from the database
+            db.ref("locations/" + selectedStopName).once("value", function(snap) {
+                if (!snap.exists()) return;
+                
+                targetStopLat = snap.val().lat;
+                targetStopLng = snap.val().lng;
+
+                // Toggle interface views
+                document.getElementById("studentAuthBox").classList.add("hidden");
+                document.getElementById("mapContainer").classList.remove("hidden");
+                document.getElementById("welcomeMsg").innerText = `Tracking buses near ${selectedStopName} for Student ${roll}`;
+
+                // Setup the Map centered on the student's stop
+                map = L.map('map').setView([targetStopLat, targetStopLng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+                // Drop a permanent marker on the student's chosen boarding stop
+                L.marker([targetStopLat, targetStopLng]).addTo(map)
+                    .bindPopup(`<b>📍 Your Stop: ${selectedStopName}</b>`).openPopup();
+
+                // Begin scanning live fleet database node feeds
+                startFleetTrackingListener();
+            });
+        };
+
+        function startFleetTrackingListener() {
+            db.ref("buses").on("value", function(snapshot) {
+                const buses = snapshot.val();
+                if (!buses) return;
+
+                for (let id in buses) {
+                    const bus = buses[id];
+                    let bLat = parseFloat(bus.latitude);
+                    let bLng = parseFloat(bus.longitude);
+
+                    if (isNaN(bLat) || !bLng) continue;
+
+                    // Calculate distance from the bus to the student's selected stop
+                    let distanceToStop = calculateHaversine(targetStopLat, targetStopLng, bLat, bLng);
+
+                    // Show the bus if it's within a 5.0 km radius of the stop
+                    if (distanceToStop <= 5.0) {
+                        if (markers[id]) {
+                            markers[id].setLatLng([bLat, bLng]);
+                        } else {
+                            markers[id] = L.marker([bLat, bLng], { icon: busIcon }).addTo(map);
+                        }
+
+                        // Generate a detailed interactive details card popup on click
+                        markers[id].bindPopup(`
+                            <div style="text-align:center; font-family:Arial,sans-serif; min-width:160px;">
+                                <h4 style="margin:2px 0; color:#003366;">Vignan Bus #${id}</h4>
+                                <p style="margin:4px 0; font-size:13px;"><b>Driver Code:</b> ${bus.dId || 'Assigning'}</p>
+                                <p style="margin:4px 0; font-size:13px; color:#d9534f;"><b>Distance:</b> ${distanceToStop} km away</p>
+                                <hr style="border:0; border-top:1px solid #eee; margin:6px 0;">
+                                <a href="tel:${bus.phone}" style="display:block; background:#28a745; color:white; padding:8px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:13px;">📞 Contact Driver</a>
+                            </div>
+                        `);
+
+                        // Dynamically plot today's polyline route path logic if available
+                        if (bus.todayRouteStops && bus.todayRouteStops.length > 0) {
+                            if (routeLines[id]) map.removeLayer(routeLines[id]);
+
+                            let pathCoordinates = [];
+                            let promises = bus.todayRouteStops.map(stop => {
+                                return db.ref("locations/" + stop).once("value", function(lSnap) {
+                                    if (lSnap.exists()) pathCoordinates.push([lSnap.val().lat, lSnap.val().lng]);
+                                });
+                            });
+
+                            Promise.all(promises).then(() => {
+                                if (pathCoordinates.length > 1) {
+                                    routeLines[id] = L.polyline(pathCoordinates, { color: '#003366', weight: 5, opacity: 0.6 }).addTo(map);
+                                }
+                            });
+                        }
+                    } else {
+                        // Remove the bus marker if it moves out of range
+                        if (markers[id]) {
+                            map.removeLayer(markers[id]);
+                            delete markers[id];
+                        }
+                        if (routeLines[id]) {
+                            map.removeLayer(routeLines[id]);
+                            delete routeLines[id];
+                        }
+                    }
+                }
+            });
         }
-    };
-</script>
+
+        function calculateHaversine(lat1, lon1, lat2, lon2) {
+            let R = 6371; // Earth radius in km
+            let dLat = (lat2 - lat1) * Math.PI / 180;
+            let dLon = (lon2 - lon1) * Math.PI / 180;
+            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))).toFixed(2);
+        }
+
+        window.logoutUser = function() {
+            window.location.href = "index.html";
+        };
+    </script>
 </body>
 </html>
-
