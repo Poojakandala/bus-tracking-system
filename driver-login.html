@@ -3,225 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VignanITS RTC - Driver Console</title>
-    <style>
-        :root {
-            --rtc-orange: #ff6b00;
-            --rtc-navy: #0a1931;
-            --rtc-dark: #151f32;
-            --rtc-light: #f4f6f9;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--rtc-navy); color: white; }
-        .header-bar { background: linear-gradient(135deg, var(--rtc-navy), #002244); padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--rtc-orange); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .logo-area { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; letter-spacing: 1px; color: var(--rtc-orange); }
-        .logo-area span { color: white; }
-        .main-container { max-width: 480px; background: var(--rtc-dark); margin: 40px auto; padding: 35px; border-radius: 16px; border: 1px solid #233149; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { font-size: 24px; margin-bottom: 25px; color: white; text-align: center; font-weight: 700; border-bottom: 1px solid #233149; padding-bottom: 15px; }
-        label { display: block; text-align: left; margin-top: 15px; color: #9ca3af; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        select, input { width: 100%; padding: 14px; margin: 8px 0 18px 0; border: 1px solid #233149; background: #0a1931; color: white; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: all 0.3s; }
-        select:focus, input:focus { border-color: var(--rtc-orange); outline: none; box-shadow: 0 0 8px rgba(255, 107, 0, 0.4); }
-        .stops-grid { background: #0a1931; border: 1px solid #233149; padding: 15px; border-radius: 8px; max-height: 220px; overflow-y: auto; margin: 15px 0; text-align: left; }
-        .stop-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid #151f32; transition: background 0.2s; }
-        .stop-item:hover { background: #151f32; }
-        .stop-item input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; accent-color: var(--rtc-orange); transform: scale(1.2); }
-        .stop-item label { margin: 0; color: white; text-transform: none; font-size: 15px; font-weight: 500; cursor: pointer; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; letter-spacing: 0.5px; transition: all 0.3s; margin-top: 10px; }
-        .btn-orange { background: var(--rtc-orange); color: white; }
-        .btn-orange:hover { background: #e05e00; transform: translateY(-2px); }
-        .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; transform: translateY(-2px); }
-        .btn-back { background: #374151; color: #d1d5db; }
-        .hidden { display: none; }
-        .tracking-state { text-align: center; padding: 20px; }
-        .pulse-dot { width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    </style>
+    <title>Driver Portal | Vignan Bus Tracker</title>
+    <meta name="description" content="Driver login portal for Vignan ITS Bus Tracking System. Start GPS tracking for your bus route.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-body driver-console-body">
 
-    <div class="header-bar">
-        <div class="logo-area">🚌 VIGNAN <span>BUS</span></div>
-        <button onclick="logoutUser()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Logout</button>
+    <!-- Top Bar -->
+    <div class="driver-top-bar">
+        <div class="dtb-brand">
+            <span class="bus-icon">🚌</span> Vignan Bus Tracker
+        </div>
+        <button id="logoutBtn" onclick="logoutUser()" class="btn-logout" style="display:none">Logout</button>
     </div>
 
-    <div class="main-container" id="stage1">
-        <h2>Trip Configuration</h2>
-        
-        <label>Driver Staff Number</label>
-        <input type="number" id="driverid" placeholder="Enter Staff ID">
-        
-        <label>Vehicle Fleet Number</label>
-        <input type="number" id="busno" placeholder="Enter Bus Number [e.g., 1]">
-        
-        <label>Origin Terminal (Starting Point)</label>
-        <select id="sourceSelect"></select>
+    <!-- Main Console -->
+    <div class="driver-console-main">
 
-        <label>Destination Terminal (Ending Point)</label>
-        <select id="destSelect"></select>
+        <!-- Stage 1: Trip Configuration -->
+        <div id="stage1" class="console-card">
+            <h1 class="console-title">🔑 Driver Login</h1>
+            <p class="console-subtitle">Enter your driver ID to access the bus console.</p>
 
-        <button class="btn btn-orange" onclick="goToStage2()">Configure Route Stops ➡️</button>
+            <div id="loginStatus" class="status-message"></div>
+
+            <div class="form-group">
+                <label class="form-label" for="driverid">Driver Staff Number</label>
+                <div class="form-input-icon">
+                    <span class="input-icon">👤</span>
+                    <input type="number" id="driverid" class="form-input" placeholder="e.g. 1001">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="busno">Bus Number / Route</label>
+                <div class="form-input-icon">
+                    <span class="input-icon">🚌</span>
+                    <input type="text" id="busno" class="form-input" placeholder="e.g. Bus-7 or Route-A">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Trip Schedule</label>
+                <div class="time-grid">
+                    <div>
+                        <label class="form-label" for="departureTime" style="margin-top:0">Departure Time</label>
+                        <input type="time" id="departureTime" class="form-input" value="07:30">
+                    </div>
+                    <div>
+                        <label class="form-label" for="arrivalTime" style="margin-top:0">Arrival Time (College)</label>
+                        <input type="time" id="arrivalTime" class="form-input" value="09:00">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Select Bus Stops (for this trip)</label>
+                <div class="stops-container" id="stopsContainer">
+                    <div style="color: var(--text-dim); font-size: 13px; padding: 12px;">Enter your Driver ID first to load stops...</div>
+                </div>
+            </div>
+
+            <button id="verifyBtn" onclick="verifyAndConfigure()" class="btn-full btn-orange" style="margin-top: 8px">
+                🔐 Verify & Configure Trip
+            </button>
+
+            <div class="auth-footer-link" style="margin-top: 20px;">
+                Not registered? <a href="driver-signup.html">Sign up here</a>
+                &nbsp;|&nbsp; <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Stage 2: Tracking Active -->
+        <div id="stage2" class="console-card" style="display:none">
+            <div class="tracking-active-card">
+                <div class="tracking-icon-circle">📍</div>
+                
+                <div id="trackingDriverName" class="tracking-driver-name">Driver Name</div>
+                <div id="trackingBusName" class="tracking-bus-name">Bus Route</div>
+
+                <div class="tracking-time-display">
+                    <div class="ttd-item">
+                        <div class="ttd-label">🕐 Departure</div>
+                        <div class="ttd-value dep" id="displayDeparture">--:--</div>
+                    </div>
+                    <div class="ttd-item">
+                        <div class="ttd-label">🏫 Arrival</div>
+                        <div class="ttd-value arr" id="displayArrival">--:--</div>
+                    </div>
+                </div>
+
+                <div class="live-badge" style="margin: 0 auto 16px; width: fit-content;">
+                    <span class="pulse-dot"></span> GPS Broadcasting Live
+                </div>
+
+                <div class="tracking-coords" id="trackingCoords">
+                    Acquiring GPS signal...
+                </div>
+
+                <div id="trackingDriverInfo" class="driver-info" style="text-align:left; margin-bottom: 20px;">
+                    <div class="driver-avatar">👨‍✈️</div>
+                    <div class="driver-details">
+                        <div class="driver-name" id="trackingDriverNameSmall">Loading...</div>
+                        <div class="driver-phone">📞 <span id="trackingDriverPhone">--</span></div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px;">
+                    <button onclick="stopTracking()" class="btn-full btn-gray" style="flex:1">
+                        ⏹ Stop Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="main-container hidden" id="stage2">
-        <h2>Via Stops Checklist</h2>
-        <p style="color: #9ca3af; font-size:13px; text-align: center; margin-top: -15px;">Only showing middle stops along this specific route path:</p>
-        
-        <div class="stops-grid" id="middleStopsArea"></div>
+    <script type="module">
+        import { db } from './firebase.js';
+        import { ref, get, set, remove, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-        <button class="btn btn-success" onclick="startBusTracking()">Initialize Route & Broadcast</button>
-        <button class="btn btn-back" onclick="backToStage1()" style="margin-top: 12px;">⬅️ Change Terminals</button>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgjc3rXgx_JgUBvnTLv6c32HW4UNyu6Cw",
-            authDomain: "bus-tracking-system-78e94.firebaseapp.com",
-            databaseURL: "https://bus-tracking-system-78e94-default-rtdb.firebaseio.com",
-            projectId: "bus-tracking-system-78e94",
-            storageBucket: "bus-tracking-system-78e94.appspot.com",
-            messagingSenderId: "316084412095",
-            appId: "1:316084412095:web:6438bdbf0e7599b5c2f00a"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        var watchID = null;
-        var allFetchedLocations = [];
-
-        // Master chronological layout order of the routes as they exist geographically
-        const routeSequenceMaster = [
-            "Secunderabad", "Koti", "Nalgonda Cross Roads", "DSNR S-Katta", "Chaitanyapuri", 
-            "Kamala Nagar", "Rythu Bazar", "RTC Colony", "TKR Kaman", "Champapet", "Balapur", 
-            "Chandrayangutta", "BD Reddy", "Hastinapuram", "GSR", "Omkar Nagar", "Sushma", 
-            "BN Reddy", "CT Colony", "LB Temple", "H-Temple", "Mansoorabad", "Chintalkunta", 
-            "Panama", "Huda Sai Nagar", "Shiva Sindhu", "SF Colony", "Navceena", "Auto Nagar", 
-            "Bhagyalatha", "w-o School", "G-Temple", "Red Tank", "LC Colony", "L-palem", 
-            "Kuntluva", "P-Amberpet", "HYT", "Nagole AB", "Snehapuri", "Uppal", "W- House", 
-            "R-R Court", "Kamineni", "Reliance", "Alkapuri", "Al-Arch", "Vishnu", "Inamguda", 
-            "Thoopranpet", "Malkapuram", "Pochampally", "Lakkaram", "Lakkaram Dharga", 
-            "Choutuppal", "Valigonda Road", "Kaithapuram", "Koyyalagudem", "Dharmojigudem", 
-            "Yellagiri", "Panthangi", "Nalgonda", "Vignan Campus"
+        // ---- BUS STOPS DATA ----
+        const BUS_STOPS = [
+            "Deshmukhi", "Pochampally", "Ramannapeta", "Yadadri", "Mothkur",
+            "Choutuppal", "Panthangi", "Raigir", "Aler", "Bhongir",
+            "Bibinagar", "Ghatkesar", "Uppal", "Secunderabad", "KPHB"
         ];
 
-        db.ref("locations").once("value", function(snapshot) {
-            if (snapshot.exists()) {
-                snapshot.forEach(child => { 
-                    if(!allFetchedLocations.includes(child.key)) {
-                        allFetchedLocations.push(child.key); 
-                    }
-                });
-                populateTerminalDropdowns();
-            }
-        });
+        let watchId = null;
+        let currentDriverId = null;
+        let currentBusNo = null;
 
-        function populateTerminalDropdowns() {
-            const srcSel = document.getElementById("sourceSelect");
-            const destSel = document.getElementById("destSelect");
-            let optionsHtml = `<option value="">-- Choose Station --</option>`;
-            
-            // Populate based on master sequence order
-            routeSequenceMaster.forEach(place => {
-                if(allFetchedLocations.includes(place)) {
-                    optionsHtml += `<option value="${place}">${place}</option>`;
+        // Populate stops
+        const stopsContainer = document.getElementById('stopsContainer');
+        stopsContainer.innerHTML = BUS_STOPS.map((stop, i) =>
+            `<div class="stop-item">
+                <input type="checkbox" id="stop_${i}" value="${stop}">
+                <label for="stop_${i}">${stop}</label>
+             </div>`
+        ).join('');
+
+        // Expose to window
+        window.verifyAndConfigure = async function() {
+            const dIdInput = document.getElementById('driverid').value.trim();
+            const bNoInput = document.getElementById('busno').value.trim();
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+            const loginStatus = document.getElementById('loginStatus');
+
+            if (!dIdInput || !bNoInput) {
+                showStatus(loginStatus, 'error', '⚠️ Please enter both Driver ID and Bus Number.');
+                return;
+            }
+            if (!departureTime || !arrivalTime) {
+                showStatus(loginStatus, 'error', '⚠️ Please set both departure and arrival times.');
+                return;
+            }
+
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.textContent = '⏳ Verifying...';
+            verifyBtn.disabled = true;
+
+            try {
+                const driverRef = ref(db, 'drivers/' + dIdInput);
+                const snapshot = await get(driverRef);
+
+                if (!snapshot.exists()) {
+                    showStatus(loginStatus, 'error', '❌ Invalid Driver ID. Please register first.');
+                    verifyBtn.textContent = '🔐 Verify & Configure Trip';
+                    verifyBtn.disabled = false;
+                    return;
                 }
-            });
-            srcSel.innerHTML = optionsHtml;
-            destSel.innerHTML = optionsHtml;
+
+                const driverData = snapshot.val();
+                const driverName = driverData.name || 'Driver';
+                const driverPhone = driverData.phone || 'N/A';
+
+                currentDriverId = dIdInput;
+                currentBusNo = bNoInput;
+
+                // Collect selected stops
+                const selectedStops = BUS_STOPS.filter((_, i) =>
+                    document.getElementById('stop_' + i)?.checked
+                );
+
+                // Format times
+                const depFormatted = formatTime12(departureTime);
+                const arrFormatted = formatTime12(arrivalTime);
+
+                // Start GPS tracking
+                if (!navigator.geolocation) {
+                    showStatus(loginStatus, 'error', '❌ Geolocation not supported on this device.');
+                    verifyBtn.textContent = '🔐 Verify & Configure Trip';
+                    verifyBtn.disabled = false;
+                    return;
+                }
+
+                showStatus(loginStatus, 'info', '📍 Acquiring GPS signal...');
+
+                watchId = navigator.geolocation.watchPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const accuracy = position.coords.accuracy;
+                        const busRef = ref(db, 'buses/' + bNoInput.replace(/[^a-zA-Z0-9]/g, '_'));
+
+                        const busData = {
+                            latitude: lat,
+                            longitude: lon,
+                            accuracy: Math.round(accuracy),
+                            busNumber: bNoInput,
+                            driverName: driverName,
+                            driverPhone: driverPhone,
+                            driverId: dIdInput,
+                            departureTime: depFormatted,
+                            arrivalTime: arrFormatted,
+                            stops: selectedStops,
+                            lastUpdated: new Date().toISOString(),
+                            timestamp: Date.now()
+                        };
+
+                        await set(busRef, busData);
+
+                        // Auto-remove on disconnect
+                        onDisconnect(busRef).remove();
+
+                        // Update coordinates display
+                        document.getElementById('trackingCoords').textContent =
+                            `📍 Lat: ${lat.toFixed(6)}  |  Lon: ${lon.toFixed(6)}\n⭕ Accuracy: ±${Math.round(accuracy)}m`;
+                    },
+                    (err) => {
+                        console.error('GPS error:', err);
+                        document.getElementById('trackingCoords').textContent =
+                            `⚠️ GPS Error: ${err.message}`;
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+
+                // Switch to stage 2
+                document.getElementById('stage1').style.display = 'none';
+                document.getElementById('stage2').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+
+                // Populate stage 2
+                document.getElementById('trackingDriverName').textContent = '👋 ' + driverName;
+                document.getElementById('trackingBusName').textContent = '🚌 ' + bNoInput;
+                document.getElementById('trackingDriverNameSmall').textContent = driverName;
+                document.getElementById('trackingDriverPhone').textContent = driverPhone;
+                document.getElementById('displayDeparture').textContent = depFormatted;
+                document.getElementById('displayArrival').textContent = arrFormatted;
+
+            } catch (err) {
+                console.error(err);
+                showStatus(loginStatus, 'error', '❌ Error: ' + err.message);
+                verifyBtn.textContent = '🔐 Verify & Configure Trip';
+                verifyBtn.disabled = false;
+            }
+        };
+
+        window.stopTracking = async function() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (currentBusNo) {
+                try {
+                    const busRef = ref(db, 'buses/' + currentBusNo.replace(/[^a-zA-Z0-9]/g, '_'));
+                    await remove(busRef);
+                } catch (e) { /* ignore */ }
+            }
+            window.location.href = 'index.html';
+        };
+
+        window.logoutUser = window.stopTracking;
+
+        function showStatus(el, type, msg) {
+            el.className = 'status-message visible ' + type;
+            el.textContent = msg;
         }
 
-        window.goToStage2 = function() {
-            const dId = document.getElementById("driverid").value.trim();
-            const bNo = document.getElementById("busno").value.trim();
-            const src = document.getElementById("sourceSelect").value;
-            const dest = document.getElementById("destSelect").value;
-
-            if (!dId || !bNo || !src || !dest) { alert("Complete all terminal profile inputs."); return; }
-            if (src === dest) { alert("Origin and Destination cannot match."); return; }
-
-            const container = document.getElementById("middleStopsArea");
-            container.innerHTML = "";
-
-            // Find array positions inside our master sequential line map
-            let startIndex = routeSequenceMaster.indexOf(src);
-            let endIndex = routeSequenceMaster.indexOf(dest);
-
-            let middleStops = [];
-
-            // If the bus is moving forward down the array line
-            if (startIndex < endIndex) {
-                middleStops = routeSequenceMaster.slice(startIndex + 1, endIndex);
-            } 
-            // If the bus is coming backward down the array line
-            else {
-                middleStops = routeSequenceMaster.slice(endIndex + 1, startIndex).reverse();
-            }
-
-            // Filter out selections that don't exist inside your active Firebase reference list
-            middleStops = middleStops.filter(stop => allFetchedLocations.includes(stop));
-
-            if(middleStops.length === 0) {
-                container.innerHTML = `<p style="color: #ef4444; text-align:center; font-size:14px;">No intermediate tracking points found between these selections.</p>`;
-            } else {
-                middleStops.forEach(stop => {
-                    container.innerHTML += `
-                        <div class="stop-item">
-                            <input type="checkbox" name="midStop" value="${stop}" id="chk_${stop}" checked>
-                            <label for="chk_${stop}">${stop}</label>
-                        </div>
-                    `;
-                });
-            }
-
-            document.getElementById("stage1").classList.add("hidden");
-            document.getElementById("stage2").classList.remove("hidden");
-        };
-
-        window.startBusTracking = function() {
-            const dId = document.getElementById("driverid").value.trim();
-            const bNo = document.getElementById("busno").value.trim();
-            const src = document.getElementById("sourceSelect").value;
-            const dest = document.getElementById("destSelect").value;
-
-            let finalRouteSequence = [src];
-            document.querySelectorAll('input[name="midStop"]:checked').forEach(cb => { finalRouteSequence.push(cb.value); });
-            finalRouteSequence.push(dest);
-
-            db.ref('drivers/' + dId).once('value', function(snapshot) {
-                const driverInfo = snapshot.val() || {};
-
-                if (navigator.geolocation) {
-                    watchID = navigator.geolocation.watchPosition(function(pos) {
-                        db.ref('buses/' + bNo).update({
-                            dId: parseInt(dId),
-                            phone: driverInfo.phone || "9704989549",
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude,
-                            sourceName: src,
-                            destName: dest,
-                            todayRouteStops: finalRouteSequence,
-                            lastUpdated: new Date().toLocaleTimeString()
-                        });
-                    }, function(err) { alert("GPS Lock Failed: " + err.message); }, { enableHighAccuracy: true });
-
-                    document.getElementById("stage2").innerHTML = `
-                        <div class="tracking-state">
-                            <h3 style="color:#10b981;"><span class="pulse-dot"></span>SERVICE RUN ACTIVE</h3>
-                            <p style="color:#9ca3af; font-size: 14px;">Vehicle Fleet #${bNo} is broadcasting telemetry.</p>
-                        </div>
-                    `;
-                }
-            });
-        };
-
-        window.backToStage1 = function() {
-            document.getElementById("stage2").classList.add("hidden");
-            document.getElementById("stage1").classList.remove("hidden");
-        };
-
-        window.logoutUser = function() { window.location.href = "index.html"; };
+        function formatTime12(time24) {
+            const [h, m] = time24.split(':').map(Number);
+            const period = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${h12}:${m.toString().padStart(2,'0')} ${period}`;
+        }
     </script>
 </body>
 </html>
