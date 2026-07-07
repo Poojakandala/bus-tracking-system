@@ -1,58 +1,246 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Login</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - Bus Tracking System</title>
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 450px;
+            transition: transform 0.3s ease;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header .icon-box {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 16px;
+        }
+
+        .login-header h2 {
+            color: var(--text-main);
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            left: auto !important;
+            cursor: pointer;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: var(--error);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .form-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-to-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .back-to-home:hover {
+            color: var(--primary);
+        }
+    </style>
 </head>
 <body>
-    <div class="header-container">
-    <div class="logo-wrapper">
-        <img src="https://vignanits.ac.in/wp-content/uploads/2020/07/1595497656733.png" alt="Vignan Logo" class="vignan-logo">
+
+    <div class="login-container">
+        <a href="index.html" class="back-to-home"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+        
+        <div class="login-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h2>Student Login</h2>
+            <p>Access your live bus tracking dashboard</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="errorText">Invalid email or password.</span>
+        </div>
+
+        <form id="studentLoginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" placeholder="enter your student email" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                    <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <span>Sign In</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="form-footer">
+            Don't have an account? <a href="student-signup.html">Sign up here</a>
+        </div>
     </div>
-    <nav class="navbar">
-        <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="student-login.html">Student Login</a></li>
-            <li><a href="student-signup.html">Student Signup</a></li>
-            <li><a href="driver-login.html">Driver Login</a></li>
-            <li><a href="driver-signup.html">Driver Signup</a></li>
-        </ul>
-    </nav>
-</div>
 
-<script>
-    function toggleMenu() {
-        document.getElementById("navLinks").classList.toggle("active");
-    }
-</script>
-    
-<div class="form-wrapper">
-    <h2>Student Login</h2>
-    <input type="text" id="roll" placeholder="Roll Number">
-    <input type="password" id="password" placeholder="Password">
-    
-    <button onclick="studentLogin()">Login</button>
-
-    <div class="forgot-link" style="margin-top: 15px;">
-        <a href="#" onclick="showForgotMsg()">Forgot Password?</a>
-    </div>
-
-    <p style="margin-top: 20px;">
-        <a href="student-signup.html">New student? Register here</a>
-    </p>
-</div>
-
-<script>
-    function showForgotMsg() {
-        alert("Vignan Transport Security Notice:\n\nPlease visit the Admin Office at the Main Block to reset your credentials.");
-    }
-</script>
-    <script type="module" src="student-login.js"></script>
+    <!-- Core Firebase SDK and custom script -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase.js"></script>
+    <script src="student-login.js"></script>
 </body>
 </html>
-
-
-
-
-
-
